@@ -109,7 +109,7 @@ class ProductGroupMasterAdmin(admin.ModelAdmin):
                     errors = []
                     for index, row in df.iterrows():
                         product = row.get('Product', '')
-                        group_code = row['GroupCode']
+                        group_code = row['EBomCatName']
                         description = row.get('Description', None)
                         packing_name = row.get('PackingName', '')
                         fixed =  row.get('FixedVariable', 'F')
@@ -151,7 +151,7 @@ class ProductGroupMasterAdmin(admin.ModelAdmin):
                                 updated_count += 1
                             
                             vendor_names = [row.get(f'Supplier-{i}', '').strip() for i in range(1, 6) if isinstance(row.get(f'Supplier-{i}', ''), str)]
-
+                            vendors = []
                             if vendor_names:
                                 vendors = VendorMasters.objects.filter(name__in=vendor_names)
                                 obj.vendors.set(vendors)
@@ -234,7 +234,7 @@ class VehicleTypeMastersAdmin(admin.ModelAdmin):
                         created_count += 1
 
                 messages.success(request, f"Vehicle masters uploaded: {created_count} created, {updated_count} updated.")
-                return redirect('admin:masters_vendormasters_changelist')
+                return redirect('admin:masters_vehicletypemasters_changelist')
         else:
             form = VendorMasterUploadForm()
         return render(request, "master_upload.html", {"form": form})
