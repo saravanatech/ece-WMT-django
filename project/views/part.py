@@ -380,12 +380,14 @@ class ScannedWhileLoadingView(APIView):
         for part_id in parts:
             try :
               part = Part.objects.get(id=part_id)
+              print(part)
               if part.qr_type == 'Type-2':
                 packageIndexs = PackageIndex.objects.filter(part=part,packageName=package_name, packAgeIndex=package_index)
                 if len(packageIndexs)== 0:
+                    print("Continue")
                     continue
                 else :
-                    packageIndex = packageIndexs[0] 
+                    packageIndex = packageIndexs[0]
                     if packageIndex.status == PackageIndex.Status.Loaded.value:
                         PartLog.objects.create(part=part,project=part.project, logMessage="Package scanned second time which was already loaded", type='error', created_by=request.user)
                         return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
@@ -398,7 +400,10 @@ class ScannedWhileLoadingView(APIView):
                     return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
                 packageIndex.status = PackageIndex.Status.Loaded.value
                 packageIndex.save()
-            except :
+            except Exception as e:
+                print(part)
+               
+                print(e)
                 return Response({'message': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
             
             try:

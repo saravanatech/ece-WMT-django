@@ -109,7 +109,7 @@ class ProductGroupMasterAdmin(admin.ModelAdmin):
                     errors = []
                     for index, row in df.iterrows():
                         product = row.get('Product', '')
-                        group_code = row['EBomCatName']
+                        group_code = row['GroupCode']
                         description = row.get('Description', None)
                         packing_name = row.get('PackingName', '')
                         fixed =  row.get('FixedVariable', 'F')

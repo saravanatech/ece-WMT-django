@@ -26,16 +26,17 @@ SECRET_KEY = 'django-insecure-ytzc$ddj8k!acqe)-^1@di-@_vi2p4e&$rl-44=8n-qzec0sr$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    # 'http://localhost:8000',
-    'localhost',
-    '127.0.0.1',
-    'http://localhost:4200',
-    '12.0.0.1:4200',
-    '12.0.0.1',
-    'ec2-43-205-114-130.ap-south-1.compute.amazonaws.com',
-    'http://ec2-43-205-114-130.ap-south-1.compute.amazonaws.com:8001'
-]
+ALLOWED_HOSTS = ['211.201.33.241',
+                 '211.201.33.241:5000',
+                 '211.201.33.241:5001',
+                 '211.201.33.241:8080',
+                 '127.0.0.1',
+                 'localhost', 
+                 '127.0.0.1:5000',
+                 '127.0.0.1:5001',
+                 'localhost:5001',
+                 'localhost:5000']
+
 
 
 # Application definition
@@ -70,12 +71,10 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = [
-]
-
-CORS_ALLOWED_ORIGINS = [
-    'http://ec2-43-205-114-130.ap-south-1.compute.amazonaws.com:8001',
-    'http://localhost:4200',
-    # Add other origins if needed
+    "http://211.201.33.241:5000",
+    "http://211.201.33.241:5001",
+    "http://localhost:5000",
+    "http://localhost:5001"
 ]
 
 CORS_ALLOW_METHODS = [
@@ -118,6 +117,16 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME': 'ec-wmt-production',
+#         'USER': 'transform',
+#         'PASSWORD': 'Sk_[94}#5n8s$',
+#         'HOST': 'localhost',
+#         'PORT': '1433',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -153,7 +162,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # Add this line to specify where to find static files
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

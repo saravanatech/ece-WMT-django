@@ -1,3 +1,4 @@
+from masters.models.vendor import VendorMasters
 from rest_framework import serializers
 
 from masters.models.product_group import ProductGroupMaster
@@ -67,6 +68,8 @@ class PartSerializer(serializers.ModelSerializer):
         instance.mrd = validated_data.get('mrd', instance.revised_mrgd)
         instance.revised_mrgd = validated_data.get('revised_mrgd', instance.revised_mrgd)
         instance.truck_type = validated_data.get('truck_type', instance.truck_type)
+        print(validated_data.get('vendor', instance.vendor)['name'])
+        instance.vendor = VendorMasters.objects.filter(name=validated_data.get('vendor', instance.vendor)['name']).first()
         instance.vendor_status = validated_data.get('vendor_status', instance.vendor_status)
         instance.truck_no = validated_data.get('truck_no', instance.truck_no)
         instance.bay_in = validated_data.get('bay_in', instance.bay_in)

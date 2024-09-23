@@ -37,7 +37,7 @@ class Part(models.Model):
     qty = models.IntegerField(default=1,)
     uom = models.CharField(max_length=50, blank=True, null=True)
     po_mo_no = models.CharField(max_length=100, blank=True, null=True)
-    vendor = models.OneToOneField(VendorMasters, db_index=True, null=True, blank=True, on_delete=models.DO_NOTHING)
+    vendor = models.ForeignKey(VendorMasters, db_index=True, null=True, blank=True, on_delete=models.DO_NOTHING)
     vehicle = models.ForeignKey(Vehicle, db_index=True, null=True, blank=True, on_delete=models.DO_NOTHING, related_name="vehicle_part")
     package_name = models.CharField(max_length=100, null=True, blank=True, db_index=True)
     fixed_variable = models.CharField(max_length=3, default='F')
