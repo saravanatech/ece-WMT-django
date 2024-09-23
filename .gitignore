@@ -2,3 +2,6 @@ venv/
 db.sqlite3
 *.pyc
 __pychache__
+compiled/
+staticfiles/
+.venv/
