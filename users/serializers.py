@@ -4,7 +4,6 @@ from rest_framework.authtoken.models import Token
 from .models import HomePageMessage, SiteMaintenance, UserActivity, UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    branches = serializers.StringRelatedField(many=True)
     screens = serializers.StringRelatedField(many=True)
     class Meta:
         model = UserProfile

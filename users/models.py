@@ -21,27 +21,12 @@ class UserProfile(models.Model):
     role = models.CharField(max_length=100)
     location = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=100, blank=True)
-    is_sales = models.BooleanField(default=False)
-    is_sales_manager = models.BooleanField(default=False,help_text=
-                                           "Note: If this is enabled, is Sales will be enabled automatically")
-    is_ho = models.BooleanField(default=False)
-    is_dmd = models.BooleanField(default=False)
-    is_nib = models.BooleanField(default=False)
-    can_archieve = models.BooleanField(default=False)
     is_logged_in = models.BooleanField(default=False)
-    branches = models.ManyToManyField(Branch, blank=True, related_name='branches')  # Add this field to represent the relationship
-    screens = models.ManyToManyField(ScreenAccess, blank=True, related_name='screens')  # Add this field to represent the relationship
-    
-    def validate_mandatory_fields(self):
-        if self.is_sales_manager and not self.is_sales:
-            self.is_sales = True
-        if not any([self.is_sales, self.is_ho, self.is_dmd, self.is_nib]):
-            raise ValidationError(_("At least one of is_sales, is_ho, is_dmd, or is_nib must be True."))
-        
+    subscription_start = models.DateField()
+    subscription_end = models.DateField()
+    screens = models.ManyToManyField(ScreenAccess, blank=True, related_name='screens')  # Add this field to represent the relationship  
 
     def save(self, *args, **kwargs):
-        self.validate_mandatory_fields()
-
         if not self.pk and not self.user_id:
             super(UserProfile, self).save(*args, **kwargs)
             self.user.profile = self
@@ -70,7 +55,7 @@ class SiteMaintenance(models.Model):
     message = models.CharField(max_length=500)
     under_maintenance = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)   
 
     def __str__(self):
         return self.message
@@ -86,3 +71,11 @@ class UserActivity(models.Model):
         return f'{self.user.username} - {self.activity}'
 
 
+class UserSession(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    session_key = models.CharField(max_length=255, unique=True)
+    login_time = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.session_key}"

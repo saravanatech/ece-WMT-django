@@ -4,10 +4,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
-from .models import SiteMaintenance, UserActivity, UserProfile, HomePageMessage
+from .models import SiteMaintenance, UserActivity, UserProfile, HomePageMessage, UserSession
 from .serializers import HomePageMessageSerializer, SiteMaintenanceSerializer, UserActivitySerializer, UserProfileSerializer, UserSerializer
 from rest_framework.permissions import AllowAny
-
+from django.contrib.sessions.models import Session
+from django.utils import timezone
 
 class RegisterAPIView(APIView):
     def post(self, request):
@@ -32,11 +33,25 @@ class LoginAPIView(APIView):
 
         if user is not None:
             # Login the user
+            try:
+                session = UserSession.objects.get(user=user, is_active=True)
+                if session.is_active:
+                    return Response({'status':False, 'message': 'User already logged in another device'})
+            except UserSession.DoesNotExist:
+                pass
             login(request, user)
-
             # Generate a token for the user
             token, _ = Token.objects.get_or_create(user=user)
             serializer = UserSerializer(user)
+
+            UserSession.objects.update_or_create(
+            user=user, 
+            defaults={
+                'session_key': request.session.session_key,
+                'login_time': timezone.now(),
+                'is_active': True
+            }
+        )
             # Return the token as a response
             return Response({'status':True, 
                              'message': 'Credentials Validated',
@@ -97,8 +112,6 @@ class HomePageMessageViewSet(APIView):
         serializer = HomePageMessageSerializer(homepage_message, many=True)
         return Response(serializer.data, status.HTTP_200_OK)
 
-
-
 class SiteMaintenanceViewSet(APIView):
     def get(self, request):
         site_maintenance = SiteMaintenance.objects.filter(under_maintenance=True).order_by("-updated_at").first()
@@ -110,6 +123,7 @@ from rest_framework import viewsets
 class UserActivityViewSet(APIView):
     queryset = UserActivity.objects.all()
     serializer_class = UserActivitySerializer
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         
@@ -118,7 +132,13 @@ class UserActivityViewSet(APIView):
         if request.data.get('type') == 'Login':
             user_profile.is_logged_in = True
         else:
-            user_profile.is_logged_in = False     
+            user_profile.is_logged_in = False 
+            try:
+                session = session = UserSession.objects.get(user=request.user, is_active=True)
+                session.is_active = False
+                session.save()
+            except UserSession.DoesNotExist:
+                pass    
         user_profile.save()
         if serializer.is_valid():
             serializer.save()

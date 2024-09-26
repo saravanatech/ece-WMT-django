@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.contrib.auth.models import User
 from django.forms import BaseInlineFormSet
 from django.http.request import HttpRequest
-from .models import Branch, HomePageMessage, SiteMaintenance, UserActivity, UserProfile, ScreenAccess
+from .models import Branch, HomePageMessage, SiteMaintenance, UserActivity, UserProfile, ScreenAccess, UserSession
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -65,27 +65,17 @@ class UserProfileAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request: HttpRequest, obj: Union[Any,None] = ...) -> Union[List[str],Tuple[Any, ...]]:
         return ['is_logged_in']
     
-    filter_horizontal = ('branches', 'screens')
     list_display = ['user','role', 'is_logged_in']
     search_fields = ['user__username','role']
-    list_filter = ["is_logged_in","is_sales","is_ho","is_nib","is_dmd"]
+    list_filter = ["is_logged_in"]
 
 admin.site.register(UserProfile, UserProfileAdmin)
-
-
-class BranchAdmin(admin.ModelAdmin):
-    list_per_page = 50
-    list_display = [f.name for f in Branch._meta.fields]
-
-admin.site.register(Branch, BranchAdmin)
-
 
 class ScreenAccessAdmin(admin.ModelAdmin):
     list_per_page = 50
     list_display = [f.name for f in ScreenAccess._meta.fields]
 
 admin.site.register(ScreenAccess, ScreenAccessAdmin)
-
 
 class HomePageMessageAdmin(admin.ModelAdmin):
     list_per_page = 50
@@ -109,3 +99,12 @@ class UserActivityAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserActivity, UserActivityAdmin)
+
+class UserSessionAdmin(admin.ModelAdmin):
+    search_fields = ['user__username']
+    list_per_page = 50
+    list_display = [f.name for f in UserSession._meta.fields]
+    list_filter = ["is_active"]
+
+
+admin.site.register(UserSession, UserSessionAdmin)
