@@ -103,8 +103,13 @@ admin.site.register(UserActivity, UserActivityAdmin)
 class UserSessionAdmin(admin.ModelAdmin):
     search_fields = ['user__username']
     list_per_page = 50
-    list_display = [f.name for f in UserSession._meta.fields]
+    list_display = ('user', 'get_user_role', 'login_time', 'is_active')
     list_filter = ["is_active"]
 
+    def get_user_role(self, obj):
+        return obj.user.profile.role  # Access the related UserProfile role
+    
+    get_user_role.short_description = 'Role'
+    
 
 admin.site.register(UserSession, UserSessionAdmin)
