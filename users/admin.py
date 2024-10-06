@@ -101,7 +101,7 @@ class UserActivityAdmin(admin.ModelAdmin):
 admin.site.register(UserActivity, UserActivityAdmin)
 
 class UserSessionAdmin(admin.ModelAdmin):
-    search_fields = ['user__username']
+    search_fields = ['user__username','user__profile__role']
     list_per_page = 50
     list_display = ('user', 'get_user_role', 'login_time', 'is_active')
     list_filter = ["is_active"]
