@@ -4,6 +4,7 @@ from rest_framework import status
 from project.models import Project
 from project.models.parts import Part
 from project.serializer.part import PartSerializer
+from rest_framework.pagination import PageNumberPagination
 from project.serializer.project import ProjectSerializer, ProjectSummarySerializer
 
 class ProjectView(APIView):
@@ -56,9 +57,12 @@ class ProjectListFilterPartStatusView(APIView):
 
 class ProjectSummaryView(APIView):
     def get(self, request):
-        project = Project.objects.all().order_by('created_at')[:10]
-        serializer = ProjectSummarySerializer(project, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        project = Project.objects.all().order_by('created_at')
+        paginator = PageNumberPagination()
+        paginator.page_size = 100  # You can override the default page size here
+        paginated_projects = paginator.paginate_queryset(project, request)
+        serializer = ProjectSummarySerializer(paginated_projects, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ProjectSummaryFilterView(APIView):

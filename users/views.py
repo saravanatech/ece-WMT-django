@@ -34,9 +34,10 @@ class LoginAPIView(APIView):
         if user is not None:
             # Login the user
             try:
-                session = UserSession.objects.get(user=user, is_active=True)
-                if session.is_active:
-                    return Response({'status':False, 'message': 'User already logged in another device'})
+                if 'admin' in user.username:
+                    session = UserSession.objects.get(user=user, is_active=True)
+                    if session.is_active:
+                        return Response({'status':False, 'message': 'User already logged in another device'})
             except UserSession.DoesNotExist:
                 pass
             login(request, user)
