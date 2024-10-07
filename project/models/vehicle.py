@@ -16,9 +16,9 @@ class Vehicle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, db_index=True, blank=True, null=True, related_name='vehicle_created_by_user')
+        User, on_delete=models.SET_NULL, db_index=True, blank=True, null=True, related_name='vehicle_created_by_user')
     updated_by = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, db_index=True, blank=True, null=True, related_name='vehicle_updated_by_user')
+        User, on_delete=models.SET_NULL, db_index=True, blank=True, null=True, related_name='vehicle_updated_by_user')
    
 
     def __str__(self):
