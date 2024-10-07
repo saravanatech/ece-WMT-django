@@ -47,9 +47,9 @@ class Part(models.Model):
     mrd =  models.CharField(max_length= 100, blank=True, null=True)
     revised_mrgd = models.CharField(max_length= 100, blank=True, null=True)
     created_by = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, db_index=True, blank=True, null=True, related_name='created_by')
+        User, on_delete=models.SET_NULL, db_index=True, blank=True, null=True, related_name='created_by')
     updated_by = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, db_index=True, blank=True, null=True, related_name='updated_by')
+        User, on_delete=models.SET_NULL, db_index=True, blank=True, null=True, related_name='updated_by')
     truck_type =  models.CharField(max_length= 100, blank=True, null=True)
     truck_no = models.CharField(max_length= 100, blank=True,null=True, db_index=True)
     bay_in = models.CharField(max_length= 100, blank=True,null=True)
