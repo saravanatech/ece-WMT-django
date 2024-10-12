@@ -5,7 +5,7 @@ class RMCodeMaster(models.Model):
     s_no = models.IntegerField(default=0)
     rm_code = models.CharField(max_length=100, db_index=True)
     description = models.CharField(max_length=255, blank=False, null=True) 
-    sheet_thinkness = models.IntegerField(default=0, db_index=True)
+    sheet_thickness = models.IntegerField(default=0, db_index=True)
     material = models.CharField(max_length=255)
     status = models.BooleanField(default='False', db_index=True)
     
