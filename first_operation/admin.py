@@ -4,6 +4,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 import pandas as pd
 
+from first_operation.models.batch import Batch
+from first_operation.models.batch_items import BatchItems
+from first_operation.models.batch_nesting_items import BatchNestingItems
 from first_operation.models.item_type_master import ItemTypeMaster, ItemTypeMasterMasterUploadForm
 from first_operation.models.rm_code_master import RMCodeMasterMasterUploadForm
 from .models import RMCodeMaster
@@ -131,3 +134,31 @@ class ItemTypeMasterAdmin(admin.ModelAdmin):
     list_filter = ['status']
 
 admin.site.register(ItemTypeMaster, ItemTypeMasterAdmin)
+
+
+
+class BatchAdmin(admin.ModelAdmin):
+    list_per_page = 50
+    list_display = [f.name for f in Batch._meta.fields]
+    search_fields = ['batch_no']
+    list_filter = ['status']
+
+admin.site.register(Batch, BatchAdmin)
+
+
+class BatchItemsAdmin(admin.ModelAdmin):
+    list_per_page = 50
+    list_display = [f.name for f in BatchItems._meta.fields]
+    search_fields = ['batch__batch_no', 'material', 'rm_code', 'description']
+    list_filter = ['status', 'error']
+
+admin.site.register(BatchItems, BatchItemsAdmin)
+
+
+class BatchNestingItemsAdmin(admin.ModelAdmin):
+    list_per_page = 50
+    list_display = [f.name for f in BatchNestingItems._meta.fields]
+    search_fields = ['batch_items__batch__batch_no', 'nesting_item_code', 'batch_items__rm_code', 'batch_items__description']
+    list_filter = ['status']
+
+admin.site.register(BatchNestingItems, BatchNestingItemsAdmin)

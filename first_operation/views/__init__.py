@@ -1,1 +1,2 @@
 from .rm_code_master import RMCodeMastersViewSet
+from .item_type_master import ItemTypeMasterViewSet
