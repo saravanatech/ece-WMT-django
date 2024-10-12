@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'users',
     'masters',
     'project',
+    'first_operation'
 ]
 
 
