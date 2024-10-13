@@ -40,7 +40,7 @@ class BulkPartUpdateView(APIView):
                 return Response({'error': f'Part with ID {part_id} not found.'}, status=status.HTTP_404_NOT_FOUND)
                 
             part.updated_by = self.request.user
-            old_values = {field.name: getattr(part, field.name) for field in part._meta.get_fields() if hasattr(part, field.name)}  # Capture old values
+            # old_values = {field.name: getattr(part, field.name) for field in part._meta.get_fields() if hasattr(part, field.name)}  # Capture old values
             serializer = PartSerializer(part, data=part_data, partial=True)
             if serializer.is_valid():
                 serializer.save()
