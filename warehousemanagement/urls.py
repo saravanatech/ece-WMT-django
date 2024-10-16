@@ -23,6 +23,7 @@ urlpatterns = [
     path('user/', include(r'users.urls')),
     path('masters/', include(r'masters.urls')),
     path('project/', include(r'project.urls')),
+    path('first-operation/', include(r'first_operation.urls')),
 
 
 ]

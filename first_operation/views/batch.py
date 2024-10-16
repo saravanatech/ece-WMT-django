@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
 from first_operation.models.batch import Batch
+from first_operation.models.batch_log import BatchLog
 from first_operation.serializer.batch import BatchSerializer
 
 
@@ -14,7 +15,7 @@ class CreateNewBatchView(APIView):
     def post(self, request):
         req_data = request.data
         date = req_data.get('date')
-        batchNo = req_data.get('batch')
+        batchNo = req_data.get('batchNo')
         user = self.request.user
         
         try : 
@@ -27,6 +28,8 @@ class CreateNewBatchView(APIView):
 
         batch,_ = Batch.objects.get_or_create(batch_no=batchNo, created_by=user, status=0, date=date)  
         serializer = BatchSerializer(batch, partial=True)
+
+        BatchLog.objects.create(log_message="Batch Created Successfully", batch=batch, created_b=user)
         
         return Response( { "status":True,
                            "message":" Batch Created Successfully",

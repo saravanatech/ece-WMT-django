@@ -384,7 +384,6 @@ class ScannedWhileLoadingView(APIView):
               if part.qr_type == 'Type-2':
                 packageIndexs = PackageIndex.objects.filter(part=part,packageName=package_name, packAgeIndex=package_index)
                 if len(packageIndexs)== 0:
-                    print("Continue")
                     continue
                 else :
                     packageIndex = packageIndexs[0]
