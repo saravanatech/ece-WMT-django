@@ -25,8 +25,8 @@ class BatchItems(models.Model):
     nesting_count =  models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_index=True, related_name='fo_created_by')
-    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_index=True, related_name='fo_updated_by')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_index=True, related_name='fo_bi_created_by')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_index=True, related_name='fo_bi_updated_by')
     error = models.BooleanField(default=False)
     error_message = models.CharField(max_length=255, db_index=True)
 

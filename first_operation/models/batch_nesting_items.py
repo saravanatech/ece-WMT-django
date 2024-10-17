@@ -14,11 +14,11 @@ class BatchNestingItems(models.Model):
         Cancelled = 30
 
     nesting_item_code =  models.CharField(max_length=100, db_index=True)
-    neting_number = models.CharField(max_length=50, db_index=True)
+    nesting_number = models.CharField(max_length=50, db_index=True, null=False, blank=False, default="N1")
     batch_items = models.ForeignKey(BatchItems, on_delete=models.CASCADE, db_index=True)
     item_qty = models.IntegerField(default=1)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='fo_created_by')
-    updated_by =  models.ForeignKey(User, on_delete=models.SET_NULL, null=True,related_name='fo_updated_by')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='fo_bni_created_by')
+    updated_by =  models.ForeignKey(User, on_delete=models.SET_NULL, null=True,related_name='fo_bni_updated_by')
     status = models.IntegerField(default=0)
         
     def __str__(self): 
