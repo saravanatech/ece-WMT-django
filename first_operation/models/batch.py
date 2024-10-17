@@ -16,6 +16,8 @@ class Batch(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_index=True)
+    updated_by =  models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
 
 
     def __str__(self):  # __unicode__ on Python 2

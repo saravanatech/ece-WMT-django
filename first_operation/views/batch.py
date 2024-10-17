@@ -29,7 +29,7 @@ class CreateNewBatchView(APIView):
         batch,_ = Batch.objects.get_or_create(batch_no=batchNo, created_by=user, status=0, date=date)  
         serializer = BatchSerializer(batch, partial=True)
 
-        BatchLog.objects.create(log_message="Batch Created Successfully", batch=batch, created_b=user)
+        BatchLog.objects.create(log_message="Batch Created Successfully", batch=batch, created_by=user)
         
         return Response( { "status":True,
                            "message":" Batch Created Successfully",

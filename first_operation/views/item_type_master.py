@@ -1,13 +1,12 @@
 
-from rest_framework import mixins, viewsets
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.views import APIView
+
 
 from first_operation.models.item_type_master import ItemTypeMaster
 from first_operation.serializer.item_type_master import ItemTypeMasterSerializer
 
 
-class ItemTypeMasterViewSet(ModelViewSet, mixins.CreateModelMixin,
-                                     mixins.UpdateModelMixin):
+class ItemTypeMasterViewSet(APIView):
     authentication_classes = ()
     permission_classes = ()
     serializer_class = ItemTypeMasterSerializer

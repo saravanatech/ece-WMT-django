@@ -5,9 +5,9 @@ from rest_framework.viewsets import ModelViewSet
 from first_operation.models.rm_code_master import RMCodeMaster
 from first_operation.serializer.rm_code_master import RMCodeMasterSerializer
 
+from rest_framework.views import APIView
 
-class RMCodeMastersViewSet(ModelViewSet, mixins.CreateModelMixin,
-                                     mixins.UpdateModelMixin):
+class RMCodeMastersViewSet(APIView):
     authentication_classes = ()
     permission_classes = ()
     serializer_class = RMCodeMasterSerializer
