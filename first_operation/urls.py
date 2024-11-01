@@ -1,6 +1,6 @@
 from django.urls import path
 
-from first_operation.views.batch import CancelBatchView, CreateNewBatchView, FetchBatchView
+from first_operation.views.batch import CancelBatchView, CreateNewBatchView, FetchBatchView, UploadNewBatchItemsViewSet, UploadNewBatchNestingItemsViewSet
 from first_operation.views.batch_log import BatchLogsByBatchIdViewSet
 from first_operation.views.item_type_master import ItemTypeMasterViewSet
 from first_operation.views.rm_code_master import RMCodeMastersViewSet
@@ -12,5 +12,9 @@ urlpatterns = [
     path('batch_log/', BatchLogsByBatchIdViewSet.as_view(), name='batch-log'),
     path('create_batch/', CreateNewBatchView.as_view(), name='create_batch'),
     path('cancel_batch/', CancelBatchView.as_view(), name='cancel_batch'),
-    path('fetch_batch/', FetchBatchView.as_view(), name='fetch_batch')
+    path('fetch_batch/', FetchBatchView.as_view(), name='fetch_batch'),
+    path('upload_batch_items/', UploadNewBatchItemsViewSet.as_view(), name='upload_batch_items'),
+    path('upload_batch_nesting_items/', UploadNewBatchNestingItemsViewSet.as_view(), name='UploadNewBatchNestingItemsViewSet'),
+
+    
 ]

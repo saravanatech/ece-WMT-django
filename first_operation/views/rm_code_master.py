@@ -6,8 +6,10 @@ from first_operation.models.rm_code_master import RMCodeMaster
 from first_operation.serializer.rm_code_master import RMCodeMasterSerializer
 
 from rest_framework.views import APIView
+from rest_framework import generics
 
-class RMCodeMastersViewSet(APIView):
+
+class RMCodeMastersViewSet(generics.ListAPIView):
     authentication_classes = ()
     permission_classes = ()
     serializer_class = RMCodeMasterSerializer

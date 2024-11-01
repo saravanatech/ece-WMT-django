@@ -1,12 +1,12 @@
 
-from rest_framework.views import APIView
+from rest_framework import generics
 
 
 from first_operation.models.item_type_master import ItemTypeMaster
 from first_operation.serializer.item_type_master import ItemTypeMasterSerializer
 
 
-class ItemTypeMasterViewSet(APIView):
+class ItemTypeMasterViewSet(generics.ListAPIView):
     authentication_classes = ()
     permission_classes = ()
     serializer_class = ItemTypeMasterSerializer

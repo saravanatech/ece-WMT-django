@@ -5,11 +5,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from .models import SiteMaintenance, UserActivity, UserProfile, HomePageMessage, UserSession
-from .serializers import HomePageMessageSerializer, SiteMaintenanceSerializer, UserActivitySerializer, UserProfileSerializer, UserSerializer
+from .serializers import HomePageMessageSerializer, SiteMaintenanceSerializer, UserActivitySerializer, UserSerializer
 from rest_framework.permissions import AllowAny
-from django.contrib.sessions.models import Session
 from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
 
+from .serializers import ChangePasswordSerializer
 class RegisterAPIView(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -34,6 +40,9 @@ class LoginAPIView(APIView):
         if user is not None:
             # Login the user
             try:
+                if hasattr(user, 'profile') and user.profile.subscription_end < timezone.now().date():
+                    return Response({'status': False, 'message': 'Login falied - Your subscription has expired.'})
+
                 if 'admin' not in user.username:
                     session = UserSession.objects.get(user=user, is_active=True)
                     if session.is_active:
@@ -62,6 +71,44 @@ class LoginAPIView(APIView):
             return Response({'status':False, 'message': 'Invalid credentials'})
 
 
+class FetchUserData(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if hasattr(user, 'profile') and user.profile.subscription_end:
+            # Calculate days left until the subscription end date
+            today = timezone.now().date()
+            days_left = (user.profile.subscription_end - today).days
+
+            if days_left < 0:
+                return Response({
+                    'status': False,
+                    'message': "Your subscription has expired."
+                })
+            elif days_left == 0:
+                message = "Today your subscription will be expired."
+            elif days_left == 1:
+                message = f"Your subscription will expire tomorrow"
+            else :
+                message = f"Your subscription will expire in {days_left} days"
+
+
+            user_serializer = UserSerializer(user)
+
+            # Return profile data and days left in response
+            return Response({
+                'status': True,
+                'days_left': days_left,
+                'message': message,
+                'user_profile': user_serializer.data
+            })
+        else:
+            return Response({
+                'status': False,
+                'message': "Subscription details not available."
+            })
+
 class ProfileUpdateAPIView(APIView):
     def post(self, request):
         user_profile = UserProfile.objects.get(user=request.user)
@@ -72,15 +119,6 @@ class ProfileUpdateAPIView(APIView):
         user_profile.save()
 
         return Response({'message': 'Profile updated successfully'})
-    
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import check_password
-
-from .serializers import ChangePasswordSerializer
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]

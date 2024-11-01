@@ -31,10 +31,10 @@ class RMCodeMasterAdmin(admin.ModelAdmin):
                 updated_count = 0
                 created_count = 0
                 for _, row in df.iterrows():
-                    s_no = row.get('S_No', 0)
-                    rm_code = row['RM_Code']
+                    s_no = row.get('S No', 0)
+                    rm_code = row['RM Code']
                     description = row.get('Description')
-                    sheet_thickness = row.get('Sheet_Thickness')
+                    sheet_thickness = row.get('Sheet Thickness')
                     material = row.get('Material')
                     status = True if row.get('Status') == 'L' else False
                     
@@ -46,7 +46,7 @@ class RMCodeMasterAdmin(admin.ModelAdmin):
                         defaults={
                             's_no': s_no,
                             'description': description,
-                            'materi al': material,
+                            'material': material,
                             'status': status
                         }
                     )
@@ -56,13 +56,14 @@ class RMCodeMasterAdmin(admin.ModelAdmin):
                         rmcode.description = description
                         rmcode.material = material
                         rmcode.status = status
+                        rmcode.s_no = s_no
                         rmcode.save()
                         updated_count += 1
                     else:
                         created_count += 1
 
                 messages.success(request, f"RM Code Masters uploaded: {created_count} created, {updated_count} updated.")
-                return redirect('admin:masters_rmcode_changelist')
+                return redirect('admin:first_operation_rmcodemaster_changelist')
         else:
             form = RMCodeMasterMasterUploadForm()
         return render(request, "master_upload.html", {"form": form})
@@ -97,8 +98,8 @@ class ItemTypeMasterAdmin(admin.ModelAdmin):
                 updated_count = 0
                 created_count = 0
                 for _, row in df.iterrows():
-                    s_no = row.get('S_No', 0)
-                    item_code = row['Item_Code']
+                    s_no = row.get('S No', 0)
+                    item_code = row['Item Code']
                     item_type = row.get('Type')
                     status = True if row.get('Status') == 'L' else False
 
@@ -123,7 +124,7 @@ class ItemTypeMasterAdmin(admin.ModelAdmin):
                         created_count += 1
 
                 messages.success(request, f"ItemTypeMaster uploaded: {created_count} created, {updated_count} updated.")
-                return redirect('admin:masters_itemtypemaster_changelist')
+                return redirect('admin:first_operation_itemtypemaster_changelist')
         else:
             form = ItemTypeMasterMasterUploadForm()
         return render(request, "master_upload.html", {"form": form})
