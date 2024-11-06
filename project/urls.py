@@ -3,7 +3,7 @@ from django.urls import path
 from project.views.activity_log import ActivityLogCreateView
 from project.views.part import BulkPartUpdateView, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, ScannedWhileLoadingView, ScannedWhileUnLoading
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
-from project.views.project import ProjectListFilterPartStatusView, ProjectListFilterView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView
+from project.views.project import ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView
 from project.views.vehicle import ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleUpdateView
 
 from .views import EbomUploadView, ProjectView
@@ -13,6 +13,10 @@ urlpatterns = [
     path('list/', ProjectListView.as_view(), name='project-list'),
     path('list/filter/', ProjectListFilterView.as_view(), name='project-filter-list'),
     path('list/part_status/', ProjectListFilterPartStatusView.as_view(), name='project-status-list'),
+    path('list/part_status_projects/', ProjectListFilterStatusPagenatedView.as_view(), name='project-status-list-pagenated'),
+    path('list/part_for_project_ids/', ProjectListFilterPartStatusAndProjectIdView.as_view(), name='parts for project ids'),
+
+    
     path('summary-tracker/', ProjectSummaryView.as_view(), name='project-Summary-view'),
     path('summary-tracker/filter/', ProjectSummaryFilterView.as_view(), name='project-Summary-filter'),
     path('detail/', ProjectView.as_view(), name='project-fetch'),

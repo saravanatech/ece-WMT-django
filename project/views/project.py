@@ -5,7 +5,8 @@ from project.models import Project
 from project.models.parts import Part
 from project.serializer.part import PartSerializer
 from rest_framework.pagination import PageNumberPagination
-from project.serializer.project import ProjectSerializer, ProjectSummarySerializer
+from project.serializer.project import ProjectLiteSerializer, ProjectSerializer, ProjectSummarySerializer
+from django.db.models import Count, Q
 
 class ProjectView(APIView):
     def get(self, request):
@@ -71,3 +72,51 @@ class ProjectSummaryFilterView(APIView):
         project = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
         serializer = ProjectSummarySerializer(project, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class ProjectPagination(PageNumberPagination):
+    page_size = 10  # Number of projects per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class ProjectListFilterStatusPagenatedView(APIView):
+    pagination_class = ProjectPagination
+
+    def get(self, request):
+        status_params = request.query_params.get('status')
+        
+        # Fetch only projects that have at least one part with the specified status
+        projects = (
+            Project.objects
+            .annotate(part_count=Count('part', filter=Q(part__status=status_params)))
+            .filter(part_count__gt=0)
+            .order_by('created_at')
+        )
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_projects = paginator.paginate_queryset(projects, request)
+        
+        # Serialize paginated project data only
+        project_serializer = ProjectLiteSerializer(paginated_projects, many=True)
+        
+        return paginator.get_paginated_response(project_serializer.data)
+    
+
+class ProjectListFilterPartStatusAndProjectIdView(APIView):
+    def get(self, request):
+        status_params = request.query_params.get('status')
+        id = request.query_params.get('projectId')
+        projects = Project.objects.filter(pk=id,part__status=status_params).distinct().order_by('created_at')
+        
+        # Custom serialization to include only parts with status 0
+        result = []
+        for project in projects:
+            parts = Part.objects.filter(project=project, status=status_params)
+            part_serializer = PartSerializer(parts, many=True)
+            project_data = ProjectSerializer(project).data
+            project_data['parts'] = part_serializer.data
+            result.append(project_data)
+        
+        return Response(result, status=status.HTTP_200_OK)

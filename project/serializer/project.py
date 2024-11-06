@@ -21,10 +21,24 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['customerName',
+        fields = ['id','customerName',
                   'productType', 'projectName', 'projectNo','status', 'parts', 'updatedAt', 'createdAt', 'activityLogs']
         read_only_fields = ['created_at', 'updated_at']
 
+class ProjectLiteSerializer(serializers.ModelSerializer):
+
+    customerName = serializers.CharField(source='customer_name')
+    productType = serializers.CharField(source='product_type')
+    projectName = serializers.CharField(source='project_name')
+    projectNo = serializers.CharField(source='project_no')
+    createdAt = serializers.CharField(source='created_at')
+    updatedAt = serializers.CharField(source='updated_at')
+
+    class Meta:
+        model = Project
+        fields = ['customerName',
+                  'productType', 'projectName', 'projectNo','status', 'updatedAt', 'createdAt', 'id']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class ProjectSummarySerializer(serializers.ModelSerializer):
