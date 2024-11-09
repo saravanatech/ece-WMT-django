@@ -6,6 +6,14 @@ from rest_framework.permissions import IsAuthenticated
 from project.models.parts import Part
 from project.models.vehicle import Vehicle
 from project.serializer.vehicle import VehicleSerializer, VehicleWithPartSerializer
+from rest_framework.pagination import PageNumberPagination
+
+
+class VehiclePagination(PageNumberPagination):
+    page_size = 100  # Number of projects per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 
 # API to Create Vehicle
 class VehicleCreateView(APIView):
@@ -42,6 +50,19 @@ class Recent30VehicleListView(APIView):
         active_vehicles = Vehicle.objects.all().order_by('-updated_at')[:30]
         serializer = VehicleSerializer(active_vehicles, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class VehicleListView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can fetch active vehicles
+
+    def get(self, request):
+        project = Vehicle.objects.all().order_by('-updated_at')
+        paginator = PageNumberPagination()
+        paginator.page_size = 100  # You can override the default page size here
+        paginated_projects = paginator.paginate_queryset(project, request)
+        serializer = VehicleSerializer(paginated_projects, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 
 class VehicleDetailView(APIView):

@@ -8,6 +8,12 @@ from rest_framework.pagination import PageNumberPagination
 from project.serializer.project import ProjectLiteSerializer, ProjectSerializer, ProjectSummarySerializer
 from django.db.models import Count, Q
 
+
+class ProjectPagination(PageNumberPagination):
+    page_size = 100  # Number of projects per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class ProjectView(APIView):
     def get(self, request):
         project_no = request.query_params.get('project_no')
@@ -37,6 +43,22 @@ class ProjectListFilterView(APIView):
         serializer = ProjectSerializer(project, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class ProjectListFilterPagenatedView(APIView):
+    pagination_class = ProjectPagination
+
+    def get(self, request):
+        project_no = request.query_params.get('project_no')
+        projects = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
+
+        paginator = self.pagination_class()
+        paginated_projects = paginator.paginate_queryset(projects, request)
+        
+        # Serialize paginated project data only
+        project_serializer = ProjectSerializer(paginated_projects, many=True)
+        
+        return paginator.get_paginated_response(project_serializer.data)
+    
 
 
 class ProjectListFilterPartStatusView(APIView):
@@ -75,10 +97,6 @@ class ProjectSummaryFilterView(APIView):
 
 
 
-class ProjectPagination(PageNumberPagination):
-    page_size = 100  # Number of projects per page
-    page_size_query_param = 'page_size'
-    max_page_size = 100
 
 class ProjectListFilterStatusPagenatedView(APIView):
     pagination_class = ProjectPagination
