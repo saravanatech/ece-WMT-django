@@ -13,7 +13,7 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Profile'
     readonly_fields = ('is_logged_in',)
-    filter_horizontal = ('screens',)
+    filter_horizontal = ('screens','vendor')
 
 class RecentInlineFormSet(BaseInlineFormSet):
     def get_queryset(self):
@@ -69,7 +69,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user','role', 'is_logged_in']
     search_fields = ['user__username','role']
     list_filter = ["is_logged_in"]
-    filter_horizontal = ('screens',)
+    filter_horizontal = ('screens','vendor')
 
 admin.site.register(UserProfile, UserProfileAdmin)
 

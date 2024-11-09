@@ -5,6 +5,7 @@ from .models import HomePageMessage, SiteMaintenance, UserActivity, UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
     screens = serializers.StringRelatedField(many=True)
+    vendor = serializers.StringRelatedField(many=True)
     class Meta:
         model = UserProfile
         fields = '__all__'

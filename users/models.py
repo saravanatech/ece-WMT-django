@@ -3,6 +3,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
+from masters.models.vendor import VendorMasters
+
 
 class Branch(models.Model):
     name = models.CharField(max_length=100)
@@ -25,6 +27,7 @@ class UserProfile(models.Model):
     subscription_start = models.DateField()
     subscription_end = models.DateField()
     screens = models.ManyToManyField(ScreenAccess, blank=True, related_name='screens')  # Add this field to represent the relationship  
+    vendor = models.ManyToManyField(VendorMasters, blank=True, related_name='vendor_masters')  # Add this field to represent the relationship  
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.user_id:
