@@ -55,7 +55,7 @@ class ProjectListFilterPagenatedView(APIView):
         paginated_projects = paginator.paginate_queryset(projects, request)
         
         # Serialize paginated project data only
-        project_serializer = ProjectSerializer(paginated_projects, many=True)
+        project_serializer = ProjectLiteSerializer(paginated_projects, many=True)
         
         return paginator.get_paginated_response(project_serializer.data)
     
