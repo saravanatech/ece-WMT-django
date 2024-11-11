@@ -8,6 +8,8 @@ from rest_framework.pagination import PageNumberPagination
 from project.serializer.project import ProjectLiteSerializer, ProjectSerializer, ProjectSummarySerializer
 from django.db.models import Count, Q
 
+from users.models import UserProfile
+
 
 class ProjectPagination(PageNumberPagination):
     page_size = 100  # Number of projects per page
@@ -46,10 +48,25 @@ class ProjectListFilterView(APIView):
 
 class ProjectListFilterPagenatedView(APIView):
     pagination_class = ProjectPagination
-
+    
     def get(self, request):
+        # user = request.user
+        # user_profile = UserProfile.objects.get(user=user)
+        # user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         project_no = request.query_params.get('project_no')
+
         projects = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
+        # Step 2: Filter projects by parts with vendors in user_vendors
+        # un comment tge below line to implement vendor search phase 2
+
+        # projects = projects.annotate(
+        #     matching_parts_count=Count(
+        #         'part',
+        #         filter=Q(part__qr_code_scanning__in=user_vendors)
+        #     )
+        # ).filter(matching_parts_count__gt=0).order_by('created_at')
+
+        # projects = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
 
         paginator = self.pagination_class()
         paginated_projects = paginator.paginate_queryset(projects, request)

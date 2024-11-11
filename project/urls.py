@@ -15,7 +15,6 @@ urlpatterns = [
     path('list/part_status/', ProjectListFilterPartStatusView.as_view(), name='project-status-list'),
     path('list/part_status_projects/', ProjectListFilterStatusPagenatedView.as_view(), name='project-status-list-pagenated'),
     path('list/part_for_project_ids/', ProjectListFilterPartStatusAndProjectIdView.as_view(), name='parts for project ids'),
-
     
     path('summary-tracker/', ProjectSummaryView.as_view(), name='project-Summary-view'),
     path('summary-tracker/filter/', ProjectSummaryFilterView.as_view(), name='project-Summary-filter'),
