@@ -96,6 +96,8 @@ class PartECNtUpdateView(APIView):
                     serializer.save()
                     updated_parts.append(serializer.data)
                     part.is_ecn = True
+                    part.vendor_status = Part.VendorStatus.Pending.value
+                    part.part_package_mapping = {}
                     part.save()
 
                     PartLog.objects.create(part=part,project=part.project, logMessage="ECN fields Updated", type='info', created_by=request.user)
