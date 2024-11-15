@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 from masters.models.product_group import ProductGroupMaster
 from project.models.parts import Part
-from project.serializer.activity_log import ActivityLogSerializer
 from project.serializer.part_log import PartLogSerializer
 
 class PartSerializer(serializers.ModelSerializer):
@@ -31,6 +30,7 @@ class PartSerializer(serializers.ModelSerializer):
     vendorStatus = serializers.IntegerField(source='vendor_status')
     partPackageMapping = serializers.CharField(source='part_package_mapping', allow_blank=True, allow_null=True)
     vehicleStatus = serializers.IntegerField(source='vehicle_status')
+    distributionVehicleStatus = serializers.IntegerField(source='distribution_vehicle_status')
     qrData = serializers.CharField(source='qr_data', allow_blank=True, allow_null=True)
     isEcn = serializers.BooleanField(source='is_ecn', default=False)
     availableVendors = serializers.SerializerMethodField()
@@ -39,7 +39,6 @@ class PartSerializer(serializers.ModelSerializer):
     QRCodeScanning = serializers.CharField(source='qr_code_scanning', allow_blank=True, allow_null=True)
     scannedPackages=serializers.CharField(source='scanned_packages', allow_blank=True, allow_null=True)
     partLogs = PartLogSerializer(many=True, read_only=True, source='part_logs')
-
 
 
 
@@ -52,7 +51,7 @@ class PartSerializer(serializers.ModelSerializer):
             'noOfPackages', 'whtTeamName', 'sourceOfSupply', 'mrd', 'revisedMrgd', 'isPoMoMandatory',
             'truckType', 'truckNo', 'bayIn', 'bayOut', 'tat', 'qrType', 'vendorStatus',
             'createdBy', 'updatedBy', 'status', 'created_at', 'updated_at', 'availableVendors',
-            'partLogs','vehicle'
+            'partLogs','vehicle', 'distributionVehicleStatus', 'distribution_vehicle'
         ]
 
     def update(self, instance, validated_data):
@@ -86,6 +85,7 @@ class PartSerializer(serializers.ModelSerializer):
         instance.use_qr_code_scanning = validated_data.get('use_qr_code_scanning', instance.use_qr_code_scanning)
         instance.scanned_packages = validated_data.get('scanned_packages', instance.scanned_packages)
         instance.is_po_mo_mandatory = validated_data.get('is_po_mo_mandatory', instance.is_po_mo_mandatory)
+        instance.distribution_vehicle_status = validated_data.get('distribution_vehicle_status', instance.distribution_vehicle_status)
 
         # Save the updated instance
         instance.save()

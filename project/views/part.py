@@ -46,7 +46,10 @@ class BulkPartUpdateView(APIView):
                 serializer.save()
                 updated_parts.append(serializer.data)
                 part = Part.objects.get(id=part_id)
-
+                if part.vendor is None or  part.vendor.name != part_data['vendor']:
+                    vendor = VendorMasters.objects.get(name=part_data['vendor'])
+                    part.vendor = vendor
+                    part.save()
                 log_message = part_data['changeLog']
                 PartLog.objects.create(
                     part=part,
@@ -135,13 +138,19 @@ class PartVehicleLoadingUpdateView(APIView):
             try:
                 part = Part.objects.get(id=part_id)
                 part.updated_by = self.request.user
-                part.vehicle = vehicle
+                if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value :
+                    part.distribution_vehicle = vehicle
+                else : 
+                    part.vehicle = vehicle
                 serializer = PartSerializer(part, data=part_data, partial=True)
                 if serializer.is_valid():
                     serializer.save()
                     updated_parts.append(serializer.data)
-                    part.vehicle_status = Part.VechileStatus.TrukDataLoaded.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Vechile Details Updated", type='info', created_by=request.user)
+                    if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value :
+                        part.distribution_vehicle_status = Part.DistributionVehicleStatus.TrukDataLoaded.value
+                    else :
+                        part.vehicle_status = Part.DistributionVehicleStatus.TrukDataLoaded.value
+                    PartLog.objects.create(part=part,project=part.project, logMessage="Vechile Details Updated {vheicle}", type='info', created_by=request.user)
                     part.save()
                 else:
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

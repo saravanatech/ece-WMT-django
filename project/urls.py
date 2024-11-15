@@ -4,7 +4,7 @@ from project.views.activity_log import ActivityLogCreateView
 from project.views.part import BulkPartUpdateView, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, ScannedWhileLoadingView, ScannedWhileUnLoading
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
 from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView
-from project.views.vehicle import ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
+from project.views.vehicle import ActiveDistributionCenterVehicleListView, ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
 
 from .views import EbomUploadView, ProjectView
 
@@ -37,6 +37,7 @@ urlpatterns = [
 
     path('vehicles/create/', VehicleCreateView.as_view(), name='create_vehicle'),
     path('vehicles/active/', ActiveVehicleListView.as_view(), name='active_vehicles'),
+    path('vehicles/dc_active/', ActiveDistributionCenterVehicleListView.as_view(), name='distibution_active_vehicles'),
     path('vehicles/update/<int:pk>/', VehicleUpdateView.as_view(), name='update_vehicle'),
     path('vehicles/detail/', VehicleDetailView.as_view(), name='vehicle_details'),
     path('vehicles/compute_bay_timing/', BayTimeView.as_view(), name='vehicle_by_details'),

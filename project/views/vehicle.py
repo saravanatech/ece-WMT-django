@@ -21,12 +21,15 @@ class VehicleCreateView(APIView):
 
     def post(self, request):
         truck_no = request.data.get('truckNo')
+        destination = request.data.get('destination')
         # Check if a vehicle with the same truck_no and active status already exists
         if Vehicle.objects.filter(truck_no=truck_no, status=Vehicle.Status.Active.value).exists():
             return Response({'message': 'A vehicle with this truck number already exists in active state.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             vehcile,_ = Vehicle.objects.get_or_create(truck_no=truck_no)
             vehcile.created_by = self.request.user
+            if destination == 'distributionCenter':
+                vehcile.destination = Vehicle.DestinationId.Distribution_Center.value
             vehcile.save()
             serializer = VehicleSerializer(vehcile)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -38,9 +41,19 @@ class ActiveVehicleListView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure only authenticated users can fetch active vehicles
 
     def get(self, request):
-        active_vehicles = Vehicle.objects.filter(status=Vehicle.Status.Active.value)
+        active_vehicles = Vehicle.objects.filter(status=Vehicle.Status.Active.value, destination=Vehicle.DestinationId.Project_site.value)
         serializer = VehicleSerializer(active_vehicles, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class ActiveDistributionCenterVehicleListView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can fetch active vehicles
+
+    def get(self, request):
+        active_vehicles = Vehicle.objects.filter(status=Vehicle.Status.Active.value, destination=Vehicle.DestinationId.Distribution_Center.value)
+        serializer = VehicleSerializer(active_vehicles, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class Recent30VehicleListView(APIView):
@@ -71,7 +84,9 @@ class VehicleDetailView(APIView):
     def get(self, request):
         pk= request.query_params.get('id')
         vehicle = Vehicle.objects.get(pk=pk)
+        
         serializer = VehicleWithPartSerializer(vehicle)
+        
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 

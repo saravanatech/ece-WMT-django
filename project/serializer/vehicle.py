@@ -18,7 +18,7 @@ class VehicleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vehicle
-        fields = ['truckNo', 'truckType', 'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'bayInTime', 'bayOutTime', 'id']
+        fields = ['truckNo', 'truckType', 'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'bayInTime', 'bayOutTime', 'id', 'destination']
 
 class VehicleWithPartSerializer(serializers.ModelSerializer):
 
@@ -32,9 +32,28 @@ class VehicleWithPartSerializer(serializers.ModelSerializer):
     createdAt = serializers.CharField(source='created_at')
     updatedAt = serializers.CharField(source='updated_at')
     id = serializers.IntegerField(source='pk')
-    parts = PartSerializer(many=True, read_only=True, source='vehicle_part')
+    parts = serializers.SerializerMethodField()
 
 
     class Meta:
         model = Vehicle
-        fields = ['truckNo', 'truckType', 'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'bayInTime', 'bayOutTime', 'id', 'parts']
+        fields = ['truckNo', 'truckType', 'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 
+                  'bayInTime', 'bayOutTime', 'id', 'parts','destination']
+    
+    def get_parts(self, obj):
+        # Choose the source based on the destination field value
+        parts_source = 'distributon_vehicle_part' if obj.destination == Vehicle.DestinationId.Distribution_Center.value else 'vehicle_part'
+        # Get related parts based on the source
+        parts = getattr(obj, parts_source, None)
+        
+        # Serialize the parts using PartSerializer
+        return PartSerializer(parts, many=True).data
+    
+    def to_representation(self, instance):
+        # Get the default representation
+        representation = super().to_representation(instance)
+        
+        # Update parts by calling `get_parts`
+        representation['parts'] = self.get_parts(instance)
+        
+        return representation

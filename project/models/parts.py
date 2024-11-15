@@ -24,6 +24,14 @@ class Part(models.Model):
         PartiallyLoaded = 2
         UnLoaded = 3
         LoadedInTruck = 4
+    
+    class DistributionVehicleStatus(Enum):
+        NoTruckData = 0
+        TrukDataLoaded = 1
+        PartiallyLoaded = 2
+        UnLoaded = 3
+        LoadedInTruck = 4
+        
     class VendorStatus(Enum):
         Pending = 0
         QR_Generated = 1
@@ -39,6 +47,7 @@ class Part(models.Model):
     po_mo_no = models.CharField(max_length=100, blank=True, null=True)
     vendor = models.ForeignKey(VendorMasters, db_index=True, null=True, blank=True, on_delete=models.DO_NOTHING)
     vehicle = models.ForeignKey(Vehicle, db_index=True, null=True, blank=True, on_delete=models.DO_NOTHING, related_name="vehicle_part")
+    distribution_vehicle = models.ForeignKey(Vehicle, db_index=True, null=True, blank=True, on_delete=models.DO_NOTHING, related_name="distributon_vehicle_part")
     package_name = models.CharField(max_length=100, null=True, blank=True, db_index=True)
     fixed_variable = models.CharField(max_length=3, default='F')
     no_of_packages = models.CharField(max_length=100, default='1')
@@ -58,6 +67,7 @@ class Part(models.Model):
     qr_type = models.CharField(max_length=50, db_index=True, default='Type-1')
     
     status = models.IntegerField(default=0)
+    distribution_vehicle_status = models.IntegerField(default=0)
     vendor_status = models.IntegerField(default=0)
     vehicle_status = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
