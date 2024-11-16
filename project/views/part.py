@@ -102,7 +102,11 @@ class PartECNtUpdateView(APIView):
                     part.vendor_status = Part.VendorStatus.Pending.value
                     part.part_package_mapping = {}
                     part.save()
-
+                    packageIndexs = PackageIndex.objects.filter(ProjectNo=part.project.project_no, 
+                                                                packageName=part.package_name)
+                    for packIndex in packageIndexs:
+                        packIndex.revision = packIndex.revision + 1
+                        packIndex.save()
                     PartLog.objects.create(part=part,project=part.project, logMessage="ECN fields Updated", type='info', created_by=request.user)
                 else:
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -386,7 +390,13 @@ class ScannedWhileLoadingView(APIView):
         package_name = parts_data.get('package_name')
         parts = parts_data.get('parts')
         package_index = parts_data.get('package_index')
-        
+        vehicle_id = parts_data.get('vehicle_id')
+        revision = parts_data.get('revision',1)
+
+        try:
+            vehicle = Vehicle.objects.get(id=vehicle_id)
+        except:
+             return Response({'message': 'Vehicle is not active'}, status=status.HTTP_400_BAD_REQUEST)
         updated_parts = []
         for part_id in parts:
             try :
@@ -398,6 +408,8 @@ class ScannedWhileLoadingView(APIView):
                     continue
                 else :
                     packageIndex = packageIndexs[0]
+                    if packageIndex.revision != revision:
+                        return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
                     if packageIndex.status == PackageIndex.Status.Loaded.value:
                         PartLog.objects.create(part=part,project=part.project, logMessage="Package scanned second time which was already loaded", type='error', created_by=request.user)
                         return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
@@ -405,6 +417,9 @@ class ScannedWhileLoadingView(APIView):
                     packageIndex.save()
               else:
                 packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
+                if packageIndex.revision != revision:
+                        return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
+                    
                 if packageIndex.status == PackageIndex.Status.Loaded.value:
                     PartLog.objects.create(part=part,project=part.project, logMessage="Package scanned second time which was already loaded", type='error', created_by=request.user)
                     return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
@@ -449,6 +464,7 @@ class ScannedWhileUnLoading(APIView):
         package_name = parts_data.get('package_name')
         parts = parts_data.get('parts')
         package_index = parts_data.get('package_index')
+        revision = parts_data.get('revision',1)
         
         updated_parts = []
         for part_id in parts:
@@ -460,10 +476,15 @@ class ScannedWhileUnLoading(APIView):
                     continue
                 else :
                     packageIndex = packageIndexs[0] 
+                    if packageIndex.revision != revision:
+                        return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
+                    
                     packageIndex.status = PackageIndex.Status.UnLoaded.value
                     packageIndex.save()
               else:
                 packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
+                if packageIndex.revision != revision:
+                        return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
                 packageIndex.status = PackageIndex.Status.UnLoaded.value
                 packageIndex.save()
             except :

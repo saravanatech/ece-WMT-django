@@ -4,6 +4,7 @@ from rest_framework import serializers
 from masters.models.product_group import ProductGroupMaster
 from project.models.parts import Part
 from project.serializer.part_log import PartLogSerializer
+from project.serializer.projectIndex import PackageIndexSerializer
 
 class PartSerializer(serializers.ModelSerializer):
 
@@ -39,7 +40,7 @@ class PartSerializer(serializers.ModelSerializer):
     QRCodeScanning = serializers.CharField(source='qr_code_scanning', allow_blank=True, allow_null=True)
     scannedPackages=serializers.CharField(source='scanned_packages', allow_blank=True, allow_null=True)
     partLogs = PartLogSerializer(many=True, read_only=True, source='part_logs')
-
+    packageIndexs = PackageIndexSerializer(many=True, read_only=True, source='package_index')
 
 
     class Meta:
@@ -51,7 +52,7 @@ class PartSerializer(serializers.ModelSerializer):
             'noOfPackages', 'whtTeamName', 'sourceOfSupply', 'mrd', 'revisedMrgd', 'isPoMoMandatory',
             'truckType', 'truckNo', 'bayIn', 'bayOut', 'tat', 'qrType', 'vendorStatus',
             'createdBy', 'updatedBy', 'status', 'created_at', 'updated_at', 'availableVendors',
-            'partLogs','vehicle', 'distributionVehicleStatus', 'distribution_vehicle'
+            'partLogs','vehicle', 'distributionVehicleStatus', 'distribution_vehicle', 'packageIndexs'
         ]
 
     def update(self, instance, validated_data):

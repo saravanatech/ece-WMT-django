@@ -13,10 +13,11 @@ class PackageIndex(models.Model):
         Loaded = 10
         UnLoaded = 9
     
-    part = models.ForeignKey(Part,  on_delete=models.CASCADE, db_index=True)
+    part = models.ForeignKey(Part,  on_delete=models.CASCADE, db_index=True, related_name='package_index')
     ProjectNo = models.CharField(max_length=100, blank=True, null=True)
     packageName = models.CharField(max_length=200, blank=False, null=False, db_index=True)
     packAgeIndex = models.IntegerField()
+    revision = models.IntegerField(default=1)
     partsSelectedIndex = models.CharField(max_length=255, default='', blank=True, null=True)
     status = models.IntegerField(null=True, blank=True)
 
