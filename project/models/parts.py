@@ -16,6 +16,7 @@ class Part(models.Model):
         Approved = 1
         MovedToVendor = 2
         PartiallyLoaded = 3
+        DCDelivered = 9
         Delivered = 10
 
     class VechileStatus(Enum):

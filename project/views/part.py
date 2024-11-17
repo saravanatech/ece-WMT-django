@@ -153,7 +153,7 @@ class PartVehicleLoadingUpdateView(APIView):
                     if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value :
                         part.distribution_vehicle_status = Part.DistributionVehicleStatus.TrukDataLoaded.value
                     else :
-                        part.vehicle_status = Part.DistributionVehicleStatus.TrukDataLoaded.value
+                        part.vehicle_status = Part.VechileStatus.TrukDataLoaded.value
                     PartLog.objects.create(part=part,project=part.project, logMessage="Vechile Details Updated {vheicle}", type='info', created_by=request.user)
                     part.save()
                 else:
@@ -439,14 +439,21 @@ class ScannedWhileLoadingView(APIView):
                                             )
 
                 if len(notLoadedPackageIndex) != 0:
-                    part.vehicle_status = Part.VechileStatus.PartiallyLoaded.value
-                    part.status = Part.Status.PartiallyLoaded.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Package Loaded partially into vechile", type='info', created_by=request.user)
-                    
+                    if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value:
+                        part.distribution_vehicle_status = Part.DistributionVehicleStatus.PartiallyLoaded.value
+                    else :
+                        part.vehicle_status = Part.VechileStatus.PartiallyLoaded.value
+                        part.status = Part.Status.PartiallyLoaded.value
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package Loaded partially into vechile - {vehicle}", type='info', created_by=request.user)       
                 else:
-                    part.vehicle_status = Part.VechileStatus.LoadedInTruck.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Package Loaded fully into vechile", type='info', created_by=request.user)
-                    part.status = Part.Status.Delivered.value
+                    if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value:
+                        part.distribution_vehicle_status = Part.DistributionVehicleStatus.LoadedInTruck.value
+                        part.status = Part.Status.DCDelivered.value
+                    else:
+                        part.vehicle_status = Part.VechileStatus.LoadedInTruck.value
+                        part.status = Part.Status.Delivered.value
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package Loaded fully into vechile - {vehicle}", type='info', created_by=request.user)
+
                 part.updated_by = self.request.user
                 part.save()
                 updated_parts.append(part)
@@ -465,6 +472,12 @@ class ScannedWhileUnLoading(APIView):
         parts = parts_data.get('parts')
         package_index = parts_data.get('package_index')
         revision = parts_data.get('revision',1)
+        vehicle_id = parts_data.get('vehicle_id')
+        
+        try:
+            vehicle = Vehicle.objects.get(id=vehicle_id)
+        except:
+             return Response({'message': 'Vehicle is not active'}, status=status.HTTP_400_BAD_REQUEST)
         
         updated_parts = []
         for part_id in parts:
@@ -498,13 +511,19 @@ class ScannedWhileUnLoading(APIView):
                                             )
 
                 if len(notLoadedPackageIndex) != 0:
-                    part.vehicle_status = Part.VechileStatus.PartiallyLoaded.value
+                    if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value:
+                        part.distribution_vehicle_status = Part.DistributionVehicleStatus.PartiallyLoaded.value
+                    else:
+                        part.vehicle_status = Part.VechileStatus.PartiallyLoaded.value
                     part.status = Part.Status.PartiallyLoaded.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Package unloaded partially from vechile", type='info', created_by=request.user)
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package unloaded partially from vechile - {vehicle}", type='info', created_by=request.user)
                 else:
-                    part.vehicle_status = Part.VechileStatus.UnLoaded.value
+                    if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value:
+                        part.distribution_vehicle_status = Part.DistributionVehicleStatus.UnLoaded.value
+                    else:    
+                        part.vehicle_status = Part.VechileStatus.UnLoaded.value
                     part.status = Part.Status.MovedToVendor.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Package unloaded fully from vechile", type='info', created_by=request.user)
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package unloaded fully from vechile - {vehicle}", type='info', created_by=request.user)
                 part.updated_by = self.request.user
                 part.save()
                 updated_parts.append(part)

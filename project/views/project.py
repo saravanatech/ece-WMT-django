@@ -119,12 +119,12 @@ class ProjectListFilterStatusPagenatedView(APIView):
     pagination_class = ProjectPagination
 
     def get(self, request):
-        status_params = request.query_params.get('status')
+        status_params = request.GET.getlist('status')
         
         # Fetch only projects that have at least one part with the specified status
         projects = (
             Project.objects
-            .annotate(part_count=Count('part', filter=Q(part__status=status_params)))
+            .annotate(part_count=Count('part', filter=Q(part__status__in=status_params)))
             .filter(part_count__gt=0)
             .order_by('created_at')
         )
@@ -141,14 +141,14 @@ class ProjectListFilterStatusPagenatedView(APIView):
 
 class ProjectListFilterPartStatusAndProjectIdView(APIView):
     def get(self, request):
-        status_params = request.query_params.get('status')
+        status_list = request.GET.getlist('status')
         id = request.query_params.get('projectId')
-        projects = Project.objects.filter(pk=id,part__status=status_params).distinct().order_by('created_at')
+        projects = Project.objects.filter(pk=id,part__status__in=status_list).distinct().order_by('created_at')
         
         # Custom serialization to include only parts with status 0
         result = []
         for project in projects:
-            parts = Part.objects.filter(project=project, status=status_params)
+            parts = Part.objects.filter(project=project, status__in=status_list)
             part_serializer = PartSerializer(parts, many=True)
             project_data = ProjectSerializer(project).data
             project_data['parts'] = part_serializer.data
