@@ -159,12 +159,8 @@ class ProjectVendorSummaryView(APIView):
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         projects = Project.objects.all().order_by('created_at')
-        projects = projects.annotate(
-            matching_parts_count=Count(
-                'part',
-                filter=Q(part__qr_code_scanning__in=user_vendors)
-            )
-        ).filter(matching_parts_count__gt=0)
+        project_ids = Part.objects.filter(qr_code_scanning__in=user_vendors).values_list('project_id', flat=True)
+        projects = projects.filter(id__in=project_ids).order_by('created_at')
         
         paginator = PageNumberPagination()
         paginator.page_size = 100  # You can override the default page size here
