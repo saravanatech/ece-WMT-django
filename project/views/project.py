@@ -79,7 +79,7 @@ class ProjectListFilterPagenatedView(APIView):
                 'part',
                 filter=Q(part__qr_code_scanning__in=user_vendors)
             )
-        ).filter(matching_parts_count__gt=0).order_by('created_at')
+        ).filter(matching_parts_count__gt=0)
 
         # projects = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
 
@@ -110,7 +110,7 @@ class ProjectListMRDFilterPagenatedView(APIView):
                     'part',
                     filter=Q(part__mrd__icontains=mrd) & Q(part__qr_code_scanning__in=user_vendors)
                 )
-            ).filter(matching_parts_count__gt=0).order_by('created_at')
+            ).filter(matching_parts_count__gt=0)
         elif not mrd:
             projects = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
             projects = projects.annotate(
@@ -118,7 +118,7 @@ class ProjectListMRDFilterPagenatedView(APIView):
                     'part',
                     filter=Q(part__qr_code_scanning__in=user_vendors)
                 )
-            ).filter(matching_parts_count__gt=0).order_by('created_at')
+            ).filter(matching_parts_count__gt=0)
         else:
             projects = Project.objects.filter(project_no__icontains=project_no).order_by('created_at')
             projects = projects.annotate(
@@ -126,7 +126,7 @@ class ProjectListMRDFilterPagenatedView(APIView):
                     'part',
                     filter=Q(part__mrd__icontains=mrd) & Q(part__qr_code_scanning__in=user_vendors)
                 )
-            ).filter(matching_parts_count__gt=0).order_by('created_at')
+            ).filter(matching_parts_count__gt=0)
 
         # Serialize paginated project data only
         serializer = ProjectVendorSummarySerializer(projects, many=True,  context={'user_vendors': user_vendors, 'mrd': mrd} )
@@ -164,7 +164,7 @@ class ProjectVendorSummaryView(APIView):
                 'part',
                 filter=Q(part__qr_code_scanning__in=user_vendors)
             )
-        ).filter(matching_parts_count__gt=0).order_by('created_at')
+        ).filter(matching_parts_count__gt=0)
         
         paginator = PageNumberPagination()
         paginator.page_size = 100  # You can override the default page size here
@@ -184,7 +184,7 @@ class ProjectSummaryView(APIView):
                 'part',
                 filter=Q(part__qr_code_scanning__in=user_vendors)
             )
-        ).filter(matching_parts_count__gt=0).order_by('created_at')
+        ).filter(matching_parts_count__gt=0)
         
         paginator = PageNumberPagination()
         paginator.page_size = 100  # You can override the default page size here
@@ -204,7 +204,7 @@ class  ProjectVendorSummaryFilterView(APIView):
                 'part',
                 filter=Q(part__qr_code_scanning__in=user_vendors)
             )
-        ).filter(matching_parts_count__gt=0).order_by('created_at')
+        ).filter(matching_parts_count__gt=0)
 
         serializer = ProjectVendorSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -221,7 +221,7 @@ class  ProjectSummaryFilterView(APIView):
                 'part',
                 filter=Q(part__qr_code_scanning__in=user_vendors)
             )
-        ).filter(matching_parts_count__gt=0).order_by('created_at')
+        ).filter(matching_parts_count__gt=0)
 
         serializer = ProjectSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -240,7 +240,6 @@ class ProjectListFilterStatusPagenatedView(APIView):
             Project.objects
             .annotate(part_count=Count('part', filter=Q(part__status__in=status_params)))
             .filter(part_count__gt=0)
-            .order_by('created_at')
         )
         
         # Apply pagination
