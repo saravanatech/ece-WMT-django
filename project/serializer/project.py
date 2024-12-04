@@ -57,10 +57,65 @@ class ProjectSummarySerializer(serializers.ModelSerializer):
                   'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered']
 
     def get_total_parts_count(self, obj):
-        return Part.objects.filter(project=obj).count()
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj).count()
+         
+        return Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors).count()
 
     def get_count_of_packingSlip_generated(self, obj):
-        return Part.objects.filter(project=obj, vendor_status=Part.VendorStatus.Packing_Slip_Generated.value).count()
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj, vendor_status=Part.VendorStatus.Packing_Slip_Generated.value).count()
+        return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors,vendor_status=Part.VendorStatus.Packing_Slip_Generated.value).count()
 
     def get_count_of_delivered(self, obj):
-        return Part.objects.filter(project=obj, vehicle_status=Part.VechileStatus.LoadedInTruck.value).count()
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj, vehicle_status=Part.VechileStatus.LoadedInTruck.value).count()
+        
+        return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors, vehicle_status=Part.VechileStatus.LoadedInTruck.value).count()
+
+
+class ProjectVendorSummarySerializer(serializers.ModelSerializer):
+
+    customerName = serializers.CharField(source='customer_name')
+    productType = serializers.CharField(source='product_type')
+    projectName = serializers.CharField(source='project_name')
+    projectNo = serializers.CharField(source='project_no')
+    total_parts_count = serializers.SerializerMethodField()
+    count_of_packingSlip_generated = serializers.SerializerMethodField()
+    count_of_delivered = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Project
+        fields = ['customerName',
+                  'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered']
+
+    def get_total_parts_count(self, obj):
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj).count()
+        mrd = self.context.get('mrd')
+        if mrd :
+            return  Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors, status=Part.Status.MovedToVendor.value, mrd=mrd).count()
+        return Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors, status=Part.Status.MovedToVendor.value).count()
+
+    def get_count_of_packingSlip_generated(self, obj):
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj, vendor_status=Part.VendorStatus.Packing_Slip_Generated.value).count()
+        mrd = self.context.get('mrd')
+        if mrd :
+            return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors,vendor_status=Part.VendorStatus.Packing_Slip_Generated.value,  status=Part.Status.MovedToVendor.value, mrd=mrd).count()
+        return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors,vendor_status=Part.VendorStatus.Packing_Slip_Generated.value,  status=Part.Status.MovedToVendor.value).count()
+
+    def get_count_of_delivered(self, obj):
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj, vehicle_status=Part.VechileStatus.LoadedInTruck.value).count()
+        mrd = self.context.get('mrd')
+        if mrd :
+            return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors, vehicle_status=Part.VechileStatus.LoadedInTruck.value,  status=Part.Status.MovedToVendor.value, mrd=mrd).count()
+        
+        return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors, vehicle_status=Part.VechileStatus.LoadedInTruck.value,  status=Part.Status.MovedToVendor.value).count()

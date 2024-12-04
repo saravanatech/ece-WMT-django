@@ -187,6 +187,11 @@ class MovePartToVendorView(APIView):
                 return Response({'error': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
             
             try:
+                try:
+                    vendor=VendorMasters.objects.filter(name=part_data['vendor']).first()
+                except :
+                    return Response({'error': f'Selected Vendor not found.'}, status=status.HTTP_404_NOT_FOUND)
+                part_data['vendor'] = vendor.pk
                 part = Part.objects.get(id=part_id)
                 part.status = Part.Status.MovedToVendor.value
                 part.updated_by = self.request.user
@@ -416,19 +421,19 @@ class ScannedWhileLoadingView(APIView):
                     packageIndex.status = PackageIndex.Status.Loaded.value
                     packageIndex.save()
               else:
-                packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
-                if packageIndex.revision != revision:
-                        return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
-                    
-                if packageIndex.status == PackageIndex.Status.Loaded.value:
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Package scanned second time which was already loaded", type='error', created_by=request.user)
-                    return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
-                packageIndex.status = PackageIndex.Status.Loaded.value
-                packageIndex.save()
-            except Exception as e:
-                print(part)
-               
-                print(e)
+                try:
+                    packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
+                    if packageIndex.revision != revision:
+                            return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
+                        
+                    if packageIndex.status == PackageIndex.Status.Loaded.value:
+                        PartLog.objects.create(part=part,project=part.project, logMessage="Package scanned second time which was already loaded", type='error', created_by=request.user)
+                        return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
+                    packageIndex.status = PackageIndex.Status.Loaded.value
+                    packageIndex.save()
+                except:
+                    continue
+            except :
                 return Response({'message': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
             
             try:
@@ -495,11 +500,14 @@ class ScannedWhileUnLoading(APIView):
                     packageIndex.status = PackageIndex.Status.UnLoaded.value
                     packageIndex.save()
               else:
-                packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
-                if packageIndex.revision != revision:
-                        return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
-                packageIndex.status = PackageIndex.Status.UnLoaded.value
-                packageIndex.save()
+                try:
+                    packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
+                    if packageIndex.revision != revision:
+                            return Response({'message': "Scan Rejected -  Scan the latest " + package_name + " packing slip" }, status=status.HTTP_400_BAD_REQUEST)
+                    packageIndex.status = PackageIndex.Status.UnLoaded.value
+                    packageIndex.save()
+                except: 
+                    continue
             except :
                 return Response({'error': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
             

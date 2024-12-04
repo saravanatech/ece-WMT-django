@@ -3,7 +3,7 @@ from django.urls import path
 from project.views.activity_log import ActivityLogCreateView
 from project.views.part import BulkPartUpdateView, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, ScannedWhileLoadingView, ScannedWhileUnLoading
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
-from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView
+from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
 from project.views.vehicle import ActiveDistributionCenterVehicleListView, ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
 
 from .views import EbomUploadView, ProjectView
@@ -12,12 +12,17 @@ urlpatterns = [
     path('ebom/upload/', EbomUploadView.as_view(), name='ebom-upload'),
     path('list/', ProjectListView.as_view(), name='project-list'),
     path('list/filter/', ProjectListFilterPagenatedView.as_view(), name='project-filter-list'),
+
+    
     path('list/part_status/', ProjectListFilterPartStatusView.as_view(), name='project-status-list'),
     path('list/part_status_projects/', ProjectListFilterStatusPagenatedView.as_view(), name='project-status-list-pagenated'),
     path('list/part_for_project_ids/', ProjectListFilterPartStatusAndProjectIdView.as_view(), name='parts for project ids'),
     
     path('summary-tracker/', ProjectSummaryView.as_view(), name='project-Summary-view'),
     path('summary-tracker/filter/', ProjectSummaryFilterView.as_view(), name='project-Summary-filter'),
+    path('vendor-summary-tracker/', ProjectVendorSummaryView.as_view(), name='project-vendor-Summary-view'),
+    path('vendor-summary-tracker/filter/', ProjectVendorSummaryFilterView.as_view(), name='project-vendor-Summary-filter'),
+    path('summary-tracker/mrd_filter/', ProjectListMRDFilterPagenatedView.as_view(), name='project-mrd-filter-list'),
     path('detail/', ProjectView.as_view(), name='project-fetch'),
     path('isValid/', ProjectView.as_view(), name='project-valid'),
     path('parts/bulk-update/', BulkPartUpdateView.as_view(), name='bulk-part-update'),
@@ -45,12 +50,5 @@ urlpatterns = [
     path('vehicles/shipped/', ShippedVehicle.as_view(), name='shipped_vehicle'),
     path('vehicles/recent30/', Recent30VehicleListView.as_view(), name='shipped_vehicle'),
     path('vehicles/list/', VehicleListView.as_view(), name='vehicle_list'),
-
-    
-
-    
-    
-    
-
 
 ]
