@@ -20,9 +20,9 @@ class BatchNestingItems(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='fo_bni_created_by')
     updated_by =  models.ForeignKey(User, on_delete=models.SET_NULL, null=True,related_name='fo_bni_updated_by')
     status = models.IntegerField(default=0)
-    material =  models.CharField(max_length=100, db_index=True)
-    sheetThickness =  models.CharField(max_length=100, db_index=True)
-    batchNo =  models.CharField(max_length=100, db_index=True)
+    material =  models.CharField(max_length=100, db_index=True, null=True)
+    sheetThickness =  models.CharField(max_length=100, db_index=True, null=True)
+    batchNo =  models.CharField(max_length=100, db_index=True, null=True )
 
         
     def __str__(self): 
