@@ -28,9 +28,9 @@ class ProjectView(APIView):
             user_profile = UserProfile.objects.get(user=user)
             user_vendors = user_profile.vendor.all().values_list('name', flat=True)
             if mrd:
-                parts = Part.objects.filter(project__project_no=project_no, qr_code_scanning__in=user_vendors, mrd=mrd)
+                parts = Part.objects.filter(project__project_no=project_no, vendor__pk__in=user_vendors, mrd=mrd)
             else :
-                parts = Part.objects.filter(project__project_no=project_no, qr_code_scanning__in=user_vendors)
+                parts = Part.objects.filter(project__project_no=project_no, vendor__pk__in=user_vendors)
             if len(parts) == 0:
                     return Response({'error':True,'error_message': f'{project_no} - Project not found .'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -69,7 +69,7 @@ class ProjectListFilterPagenatedView(APIView):
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         project_no = request.query_params.get('project_no')
-        project_ids = Part.objects.filter(qr_code_scanning__in=user_vendors, 
+        project_ids = Part.objects.filter(vendor__pk__in=user_vendors, 
                                           project__project_no__icontains=project_no).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
 
@@ -98,11 +98,11 @@ class ProjectListMRDFilterPagenatedView(APIView):
             return Response({"error": "MRD date or Project No is required."}, status=400)
 
         if not project_no:
-            project_ids = Part.objects.filter(mrd__icontains=mrd, qr_code_scanning__in=user_vendors).values_list('project_id', flat=True).distinct()
+            project_ids = Part.objects.filter(mrd__icontains=mrd, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
         elif not mrd:
-            project_ids = Part.objects.filter(project__project_no__icontains=project_no, qr_code_scanning__in=user_vendors).values_list('project_id', flat=True).distinct()
+            project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
         else:
-            project_ids = Part.objects.filter(mrd__icontains=mrd, project__project_no__icontains=project_no, qr_code_scanning__in=user_vendors).values_list('project_id', flat=True).distinct()
+            project_ids = Part.objects.filter(mrd__icontains=mrd, project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
 
         projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
         # Serialize paginated project data only
@@ -135,7 +135,7 @@ class ProjectVendorSummaryView(APIView):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('name', flat=True)
-        project_ids = Part.objects.filter(qr_code_scanning__in=user_vendors, status=Part.Status.MovedToVendor.value).values_list('project_id', flat=True).distinct()
+        project_ids = Part.objects.filter(vendor__pk__in=user_vendors, status=Part.Status.MovedToVendor.value).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
 
         paginator = PageNumberPagination()
@@ -150,7 +150,7 @@ class ProjectSummaryView(APIView):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('name', flat=True)
-        project_ids = Part.objects.filter(qr_code_scanning__in=user_vendors).values_list('project_id', flat=True).distinct()
+        project_ids = Part.objects.filter(vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
         
         paginator = PageNumberPagination()
@@ -165,7 +165,7 @@ class  ProjectVendorSummaryFilterView(APIView):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('name', flat=True)
-        project_ids = Part.objects.filter(project__project_no__icontains=project_no, qr_code_scanning__in=user_vendors).values_list('project_id', flat=True).distinct()
+        project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
 
         serializer = ProjectVendorSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
