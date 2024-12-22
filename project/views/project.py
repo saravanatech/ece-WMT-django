@@ -26,7 +26,7 @@ class ProjectView(APIView):
         try:
             user = request.user
             user_profile = UserProfile.objects.get(user=user)
-            user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+            user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
             if mrd:
                 parts = Part.objects.filter(project__project_no=project_no, vendor__pk__in=user_vendors, mrd=mrd)
             else :
@@ -67,7 +67,7 @@ class ProjectListFilterPagenatedView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
         project_no = request.query_params.get('project_no')
         project_ids = Part.objects.filter(vendor__pk__in=user_vendors, 
                                           project__project_no__icontains=project_no).values_list('project_id', flat=True).distinct()
@@ -90,7 +90,7 @@ class ProjectListMRDFilterPagenatedView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
         mrd = request.query_params.get('mrd', '').strip()  # Fetch the mrd value from the request
         project_no = request.query_params.get('project_no', '').strip()  # Fetch the mrd value from the request
 
@@ -134,7 +134,7 @@ class ProjectVendorSummaryView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
         project_ids = Part.objects.filter(vendor__pk__in=user_vendors, status=Part.Status.MovedToVendor.value).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
 
@@ -149,7 +149,7 @@ class ProjectSummaryView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
         project_ids = Part.objects.filter(vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
         
@@ -164,7 +164,7 @@ class  ProjectVendorSummaryFilterView(APIView):
         project_no = request.query_params.get('project_no')
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
         project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
 
@@ -176,7 +176,7 @@ class  ProjectSummaryFilterView(APIView):
         project_no = request.query_params.get('project_no')
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
         project_ids = Part.objects.filter(project__project_no__icontains=project_no).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
 
