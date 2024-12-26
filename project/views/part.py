@@ -4,17 +4,17 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-
-
-
+from django.utils.timezone import now
 from masters.models.vendor import VendorMasters
 from project.models.package_index import PackageIndex
 from project.models.part_log import PartLog
 from project.models.parts import Part
 from project.models.vehicle import Vehicle
-from project.serializer.part import PartSerializer
+from project.serializer.part import PartSerializer, VendorStatsSerializer
 import json
 from django.db.models import Q
+
+from users.models import UserProfile
 
 
 class BulkPartUpdateView(APIView):
@@ -168,6 +168,88 @@ class PartVehicleLoadingUpdateView(APIView):
         return Response(updated_parts, status=status.HTTP_200_OK)
 
 
+class VendorStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        today = now().date()
+
+        # Query to fetch the parts related to the vendor
+        parts_queryset = Part.objects.filter(vendor__pk__in=user_vendors, 
+                                             status=Part.Status.MovedToVendor.value)
+
+        # Total number of parts assigned
+        total_parts_assigned = parts_queryset.count()
+
+        # Total number of overdue parts
+        overdue_parts = parts_queryset.filter(
+            mrd__isnull=False
+        ).filter(
+            mrd__lt=today.strftime("%Y-%m-%d")
+        ).count()
+
+        # Total number of parts pending for acceptance
+        pending_acceptance_parts = parts_queryset.filter(vendor_status=-3).count()
+
+        # Prepare the response
+        stats = {
+            "total_parts_assigned": total_parts_assigned,
+            "overdue_parts": overdue_parts,
+            "pending_acceptance_parts": pending_acceptance_parts,
+        }
+
+        serializer = VendorStatsSerializer(stats)
+        return Response(serializer.data)
+
+
+class PartsForAcceptance(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        today = now().date()
+
+        # Query to fetch the parts related to the vendor
+        parts_queryset = Part.objects.filter(vendor__pk__in=user_vendors, 
+                                             status=Part.Status.MovedToVendor.value,
+                                             vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
+
+        serializer = PartSerializer(parts_queryset, many=True)
+        return Response(serializer.data)
+
+
+class PartsForAcceptanceResponse(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        part_ids = data.get('part_ids', [])
+        accepted = data.get('accepted', False)
+        reason = data.get('reason','')
+        for part_id in part_ids:
+            try:
+                part = Part.objects.get(id=part_id)
+                if accepted:
+                    part.vendor_status = Part.VendorStatus.Pending.value
+                else:
+                    part.vendor_status = Part.VendorStatus.Req_rejected.value
+                part.remarks = reason
+                part.save()
+            except:
+                return Response({'error': f'Part with ID {part_id} not found.'}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                PartLog.objects.create(part=part,project=part.project, logMessage="Vendor Accepted the Part", type='info', created_by=request.user)
+            except:
+                pass
+            
+        
+        return Response({ "message": "Parts Updated Successfully."}, status=status.HTTP_200_OK)
+    
 
 class MovePartToVendorView(APIView):
     def post(self, request):
@@ -195,6 +277,8 @@ class MovePartToVendorView(APIView):
                 part = Part.objects.get(id=part_id)
                 part.status = Part.Status.MovedToVendor.value
                 part.updated_by = self.request.user
+                if vendor.auto_accept == False:
+                    part.vendor_status = Part.VendorStatus.Pending_for_acceptance.value
                 part.save()
                 PartLog.objects.create(part=part,project=part.project, logMessage="Status changed to Moved to Vendor", type='info', created_by=request.user)
                 serializer = PartSerializer(part, data=part_data, partial=True)

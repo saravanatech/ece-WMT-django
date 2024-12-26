@@ -102,3 +102,9 @@ class PartSerializer(serializers.ModelSerializer):
             return vendor_names
         except Exception as e:
             return []
+
+
+class VendorStatsSerializer(serializers.Serializer):
+    total_parts_assigned = serializers.IntegerField()
+    overdue_parts = serializers.IntegerField()
+    pending_acceptance_parts = serializers.IntegerField()

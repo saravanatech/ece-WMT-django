@@ -1,3 +1,4 @@
+from collections import defaultdict
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,9 +8,15 @@ from project.serializer.part import PartSerializer
 from rest_framework.pagination import PageNumberPagination
 from project.serializer.project import ProjectLiteSerializer, ProjectSerializer, ProjectSummarySerializer, ProjectVendorSummarySerializer
 from django.db.models import Count, Q
+from django.utils.timezone import now
+from datetime import datetime
 
 from users.models import UserProfile
 
+class MRDGroupedPagination(PageNumberPagination):
+    page_size = 10  # Number of groups per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class ProjectPagination(PageNumberPagination):
     page_size = 100  # Number of projects per page
@@ -86,7 +93,7 @@ class ProjectListFilterPagenatedView(APIView):
     
 
 class ProjectListMRDFilterPagenatedView(APIView):
-    
+    pagination_class = MRDGroupedPagination
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
@@ -98,18 +105,44 @@ class ProjectListMRDFilterPagenatedView(APIView):
             return Response({"error": "MRD date or Project No is required."}, status=400)
 
         if not project_no:
-            project_ids = Part.objects.filter(mrd__icontains=mrd, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
+            parts = Part.objects.filter(
+                Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(vendor__pk__in=user_vendors)
+            ).order_by('mrd').select_related('project')
         elif not mrd:
-            project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
+            parts = Part.objects.filter(
+            Q(status=Part.Status.MovedToVendor.value) & Q(project__project_no__icontains=project_no) & Q(vendor__pk__in=user_vendors)
+            ).order_by('mrd').select_related('project')
         else:
-            project_ids = Part.objects.filter(mrd__icontains=mrd, project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
+            parts = Part.objects.filter(
+            Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(project__project_no__icontains=project_no) & Q(vendor__pk__in=user_vendors)
+            ).order_by('mrd').select_related('project')
 
-        projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
-        # Serialize paginated project data only
-        serializer = ProjectVendorSummarySerializer(projects, many=True,  context={'user_vendors': user_vendors, 'mrd': mrd} )
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        grouped_projects = defaultdict(list)
+        for part in parts:
+            grouped_projects[part.mrd].append(part.project)
 
+        current_date = now().date()
+        flattened_projects = []
+        for mrd_date, projects in grouped_projects.items():
+            mrd_date_obj = datetime.strptime(mrd_date, "%Y-%m-%d").date()
+            due_days_remaining = (mrd_date_obj - current_date).days
+
+            for project in set(projects):  # Avoid duplicate projects
+                serializer = ProjectVendorSummarySerializer(
+                    project,
+                    context={
+                        'user_vendors': user_vendors,
+                        'mrd': mrd_date,
+                        'due_days': due_days_remaining,
+                    }
+                )
+                flattened_projects.append(serializer.data)
+
+        # Step 4: Apply pagination
+        paginator = self.pagination_class()
+        paginated_data = paginator.paginate_queryset(flattened_projects, request)
+
+        return paginator.get_paginated_response(paginated_data)
     
 
 
@@ -130,19 +163,50 @@ class ProjectListFilterPartStatusView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class ProjectVendorSummaryView(APIView):
+class  ProjectVendorSummaryView(APIView):
+    pagination_class = MRDGroupedPagination
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
-        project_ids = Part.objects.filter(vendor__pk__in=user_vendors, status=Part.Status.MovedToVendor.value).values_list('project_id', flat=True).distinct()
-        projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
+        parts = Part.objects.filter(
+            Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors)
+        ).order_by('mrd').select_related('project')
+        grouped_projects = defaultdict(list)
+        for part in parts:
+            grouped_projects[part.mrd].append(part.project)
 
-        paginator = PageNumberPagination()
-        paginator.page_size = 100  # You can override the default page size here
-        paginated_projects = paginator.paginate_queryset(projects, request)
-        serializer = ProjectVendorSummarySerializer(paginated_projects, many=True,  context={'user_vendors': user_vendors} )
-        return paginator.get_paginated_response(serializer.data)
+        current_date = now().date()
+        flattened_projects = []
+        for mrd_date, projects in grouped_projects.items():
+            mrd_date_obj = datetime.strptime(mrd_date, "%Y-%m-%d").date()
+            due_days_remaining = (mrd_date_obj - current_date).days
+
+            for project in set(projects):  # Avoid duplicate projects
+                serializer = ProjectVendorSummarySerializer(
+                    project,
+                    context={
+                        'user_vendors': user_vendors,
+                        'mrd': mrd_date,
+                        'due_days': due_days_remaining,
+                    }
+                )
+                flattened_projects.append(serializer.data)
+
+
+        # Step 4: Apply pagination
+        paginator = self.pagination_class()
+        paginated_data = paginator.paginate_queryset(flattened_projects, request)
+
+        return paginator.get_paginated_response(paginated_data)
+        
+        
+        # projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
+        # paginator = PageNumberPagination()
+        # paginator.page_size = 100  # You can override the default page size here
+        # paginated_projects = paginator.paginate_queryset(projects, request)
+        # serializer = ProjectVendorSummarySerializer(paginated_projects, many=True,  context={'user_vendors': user_vendors} )
+        # return paginator.get_paginated_response(serializer.data)
 
 
 class ProjectSummaryView(APIView):
@@ -159,17 +223,50 @@ class ProjectSummaryView(APIView):
         serializer = ProjectSummarySerializer(paginated_projects, many=True,  context={'user_vendors': user_vendors} )
         return paginator.get_paginated_response(serializer.data)
 
+
+
 class  ProjectVendorSummaryFilterView(APIView):
+    pagination_class = MRDGroupedPagination
     def get(self, request):
         project_no = request.query_params.get('project_no')
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
-        project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
-        projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
+        parts = Part.objects.filter(
+            Q(status=Part.Status.MovedToVendor.value) & Q(project__project_no__icontains=project_no) & Q(vendor__pk__in=user_vendors)
+        ).order_by('mrd').select_related('project')
+        grouped_projects = defaultdict(list)
+        for part in parts:
+            grouped_projects[part.mrd].append(part.project)
 
-        serializer = ProjectVendorSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        current_date = now().date()
+        flattened_projects = []
+        for mrd_date, projects in grouped_projects.items():
+            mrd_date_obj = datetime.strptime(mrd_date, "%Y-%m-%d").date()
+            due_days_remaining = (mrd_date_obj - current_date).days
+
+            for project in set(projects):  # Avoid duplicate projects
+                serializer = ProjectVendorSummarySerializer(
+                    project,
+                    context={
+                        'user_vendors': user_vendors,
+                        'mrd': mrd_date,
+                        'due_days': due_days_remaining,
+                    }
+                )
+                flattened_projects.append(serializer.data)
+
+        # Step 4: Apply pagination
+        paginator = self.pagination_class()
+        paginated_data = paginator.paginate_queryset(flattened_projects, request)
+
+        return paginator.get_paginated_response(paginated_data)
+
+        # project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
+        # projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
+
+        # serializer = ProjectVendorSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
+        # return Response(serializer.data, status=status.HTTP_200_OK)
 
 class  ProjectSummaryFilterView(APIView):
     def get(self, request):

@@ -26,6 +26,7 @@ class UserProfile(models.Model):
     is_logged_in = models.BooleanField(default=False)
     subscription_start = models.DateField()
     subscription_end = models.DateField()
+    isVendor = models.BooleanField(default=False)
     screens = models.ManyToManyField(ScreenAccess, blank=True, related_name='screens')  # Add this field to represent the relationship  
     vendor = models.ManyToManyField(VendorMasters, blank=True, related_name='vendor_masters')  # Add this field to represent the relationship  
 

@@ -1,4 +1,5 @@
 from enum import Enum
+from django.utils import timezone
 from django.db import models
 
 from masters.models.product_group import ProductGroupMaster
@@ -34,6 +35,8 @@ class Part(models.Model):
         LoadedInTruck = 4
         
     class VendorStatus(Enum):
+        Pending_for_acceptance = -3
+        Req_rejected = -2
         Pending = 0
         QR_Generated = 1
         package_allocation_done = 2
@@ -81,6 +84,8 @@ class Part(models.Model):
     qr_code_scanning = models.CharField(max_length=100,default='', blank=True, null=True)
     scanned_packages = models.CharField(max_length=50, blank=True, null=True, default='')
     is_po_mo_mandatory = models.BooleanField(default=False, db_index=True, blank=True, null=True)
+    accepted_time = models.DateTimeField(default=timezone.now)
+    remarks = models.TextField(default='' )
 
 
 

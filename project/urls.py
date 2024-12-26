@@ -1,7 +1,7 @@
 from django.urls import path
 
 from project.views.activity_log import ActivityLogCreateView
-from project.views.part import BulkPartUpdateView, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, ScannedWhileLoadingView, ScannedWhileUnLoading
+from project.views.part import BulkPartUpdateView, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, PartsForAcceptance, PartsForAcceptanceResponse, ScannedWhileLoadingView, ScannedWhileUnLoading, VendorStatsView
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
 from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
 from project.views.vehicle import ActiveDistributionCenterVehicleListView, ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
@@ -17,7 +17,9 @@ urlpatterns = [
     path('list/part_status/', ProjectListFilterPartStatusView.as_view(), name='project-status-list'),
     path('list/part_status_projects/', ProjectListFilterStatusPagenatedView.as_view(), name='project-status-list-pagenated'),
     path('list/part_for_project_ids/', ProjectListFilterPartStatusAndProjectIdView.as_view(), name='parts for project ids'),
-    
+    path('part-for-acceptance/', PartsForAcceptance.as_view(), name='parts-accptance'),
+    path('partsForAcceptanceResponse', PartsForAcceptanceResponse.as_view(), name='partsForAcceptanceResponse'),
+    path('vendor-stats/', VendorStatsView.as_view(), name='vendor-stats'),
     path('summary-tracker/', ProjectSummaryView.as_view(), name='project-Summary-view'),
     path('summary-tracker/filter/', ProjectSummaryFilterView.as_view(), name='project-Summary-filter'),
     path('vendor-summary-tracker/', ProjectVendorSummaryView.as_view(), name='project-vendor-Summary-view'),

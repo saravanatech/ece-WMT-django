@@ -86,11 +86,21 @@ class ProjectVendorSummarySerializer(serializers.ModelSerializer):
     total_parts_count = serializers.SerializerMethodField()
     count_of_packingSlip_generated = serializers.SerializerMethodField()
     count_of_delivered = serializers.SerializerMethodField()
-    
+    mrd_date = serializers.SerializerMethodField()
+    due_days_remaning = serializers.SerializerMethodField()
     class Meta:
         model = Project
-        fields = ['customerName',
+        fields = ['customerName', 'due_days_remaning', 'mrd_date',
                   'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered']
+
+    def get_mrd_date(self, obj):
+        mrd_date = self.context.get('mrd', None)
+        return mrd_date
+
+    def get_due_days_remaning(self, obj):
+        due_days = self.context.get('due_days', None)
+        return due_days
+
 
     def get_total_parts_count(self, obj):
         user_vendors = self.context.get('user_vendors')
