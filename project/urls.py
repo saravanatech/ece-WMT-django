@@ -1,9 +1,9 @@
 from django.urls import path
 
 from project.views.activity_log import ActivityLogCreateView
-from project.views.part import BulkPartUpdateView, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, PartsForAcceptance, PartsForAcceptanceResponse, ScannedWhileLoadingView, ScannedWhileUnLoading, VendorStatsView
+from project.views.part import BulkPartUpdateView, FetchRejectedPartsView, GoodsQCFailed, GoodsRecieved, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, PartsForAcceptance, PartsForAcceptanceResponse, ScannedWhileLoadingView, ScannedWhileUnLoading, VendorAcceptedPartsView, VendorRejectedPartsView, VendorStatsView
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
-from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
+from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectNewlyAddedVendorSummaryView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
 from project.views.vehicle import ActiveDistributionCenterVehicleListView, ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
 
 from .views import EbomUploadView, ProjectView
@@ -24,6 +24,7 @@ urlpatterns = [
     path('summary-tracker/filter/', ProjectSummaryFilterView.as_view(), name='project-Summary-filter'),
     path('vendor-summary-tracker/', ProjectVendorSummaryView.as_view(), name='project-vendor-Summary-view'),
     path('vendor-summary-tracker/filter/', ProjectVendorSummaryFilterView.as_view(), name='project-vendor-Summary-filter'),
+    path('vendor-summary-tracker/new/', ProjectNewlyAddedVendorSummaryView.as_view(), name='project-new-vendor-Summary-filter'),
     path('summary-tracker/mrd_filter/', ProjectListMRDFilterPagenatedView.as_view(), name='project-mrd-filter-list'),
     path('detail/', ProjectView.as_view(), name='project-fetch'),
     path('isValid/', ProjectView.as_view(), name='project-valid'),
@@ -33,6 +34,11 @@ urlpatterns = [
     path('parts/move-to-vendor/', MovePartToVendorView.as_view(), name='move-to-vendor'),
     path('parts/move-to-approved/', MovePartToApprovedrView.as_view(), name='move-to-approved'),
     path('parts/move-to-done/', MovePartToDoneView.as_view(), name='move-to-done'),
+    path('parts/vendor-accpeted/', VendorAcceptedPartsView.as_view(), name='vendor-accpeted'),
+    path('parts/vendor-rejected/', VendorRejectedPartsView.as_view(), name='vendor-rejected'),
+
+    path('parts/rejection-list/', FetchRejectedPartsView.as_view(), name='fetch-rejection-list'),
+    
     path('parts/qr-generated/', PartQRGeneratedView.as_view(), name='move-to-qr-generated'),
     path('parts/scanned_while_loading/', ScannedWhileLoadingView.as_view(), name='scanned_while_loading'),
     path('parts/scanned_while_un_loading/', ScannedWhileUnLoading.as_view(), name='scanned_while_un_loading'), 
@@ -41,7 +47,7 @@ urlpatterns = [
     path('partlogs/<int:part_id>/', PartLogListByPartID.as_view(), name='partlog-list-by-part-id'),
     path('projectlogs/<int:project_id>/', PartLogListByProjectID.as_view(), name='partlog-list-by-project-id'),
     path('activity-logs/', ActivityLogCreateView.as_view(), name='activity-log-create'),
-
+    
     path('vehicles/create/', VehicleCreateView.as_view(), name='create_vehicle'),
     path('vehicles/active/', ActiveVehicleListView.as_view(), name='active_vehicles'),
     path('vehicles/dc_active/', ActiveDistributionCenterVehicleListView.as_view(), name='distibution_active_vehicles'),
@@ -52,5 +58,8 @@ urlpatterns = [
     path('vehicles/shipped/', ShippedVehicle.as_view(), name='shipped_vehicle'),
     path('vehicles/recent30/', Recent30VehicleListView.as_view(), name='shipped_vehicle'),
     path('vehicles/list/', VehicleListView.as_view(), name='vehicle_list'),
+
+    path('goods_receipt/received/', GoodsRecieved.as_view(), name='goods-receipt-recieved'),
+    path('goods_receipt/qc_failed/', GoodsQCFailed.as_view(), name='goods-receipt-qc-failed')
 
 ]

@@ -5,3 +5,4 @@ from .part_log import PartLog
 from .activity_log import ActivityLog
 from .vehicle import Vehicle
 from .vehicle_log import VehicleLog
+from .rejection_history import VendorRejectionHistory

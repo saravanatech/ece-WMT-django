@@ -39,10 +39,12 @@ class PartSerializer(serializers.ModelSerializer):
     useQRCodeScanning = serializers.BooleanField(source='use_qr_code_scanning', default=False)
     isPoMoMandatory = serializers.BooleanField(source='is_po_mo_mandatory', default=False)
     QRCodeScanning = serializers.CharField(source='qr_code_scanning', allow_blank=True, allow_null=True)
+    qcPassed = serializers.BooleanField(source='qc_passed')
     scannedPackages=serializers.CharField(source='scanned_packages', allow_blank=True, allow_null=True)
     partLogs = PartLogSerializer(many=True, read_only=True, source='part_logs')
     packageIndexs = PackageIndexSerializer(many=True, read_only=True, source='package_index')
-
+    assignedTime = serializers.DateTimeField(source='assigned_time')
+    acceptedTime = serializers.DateTimeField(source='accepted_time')
 
     class Meta:
         model = Part
@@ -53,7 +55,8 @@ class PartSerializer(serializers.ModelSerializer):
             'noOfPackages', 'whtTeamName', 'sourceOfSupply', 'mrd', 'revisedMrgd', 'isPoMoMandatory',
             'truckType', 'truckNo', 'bayIn', 'bayOut', 'tat', 'qrType', 'vendorStatus',
             'createdBy', 'updatedBy', 'status', 'created_at', 'updated_at', 'availableVendors',
-            'partLogs','vehicle', 'distributionVehicleStatus', 'distribution_vehicle', 'packageIndexs'
+            'partLogs','vehicle', 'distributionVehicleStatus', 'distribution_vehicle', 'packageIndexs',
+            'remarks', 'qcPassed', 'assignedTime', 'acceptedTime'
         ]
 
     def update(self, instance, validated_data):
@@ -88,7 +91,8 @@ class PartSerializer(serializers.ModelSerializer):
         instance.scanned_packages = validated_data.get('scanned_packages', instance.scanned_packages)
         instance.is_po_mo_mandatory = validated_data.get('is_po_mo_mandatory', instance.is_po_mo_mandatory)
         instance.distribution_vehicle_status = validated_data.get('distribution_vehicle_status', instance.distribution_vehicle_status)
-
+        instance.assigned_time = validated_data.get('assigned_time', instance.assigned_time)
+        instance.accepted_time = validated_data.get('accepted_time', instance.accepted_time) 
         # Save the updated instance
         instance.save()
 
@@ -108,3 +112,21 @@ class VendorStatsSerializer(serializers.Serializer):
     total_parts_assigned = serializers.IntegerField()
     overdue_parts = serializers.IntegerField()
     pending_acceptance_parts = serializers.IntegerField()
+
+
+class PartLiteSerializer(serializers.ModelSerializer):
+
+    projectNo = serializers.CharField(source='project.project_no')
+    groupCode = serializers.CharField(source='group_code')
+    partDescription = serializers.CharField(source='part_description')
+    partNumber = serializers.CharField(source='part_number')
+    poMoNo = serializers.CharField(source='po_mo_no', allow_blank=True, allow_null=True)
+    vendor = serializers.CharField(source='vendor.name', allow_blank=True, allow_null=True)
+    packageName = serializers.CharField(source='package_name', allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = Part
+        fields = [
+            'id','projectNo', 'groupCode', 'partDescription', 'partNumber',
+            'poMoNo','vendor'
+            ]

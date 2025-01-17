@@ -41,6 +41,7 @@ class Part(models.Model):
         QR_Generated = 1
         package_allocation_done = 2
         Packing_Slip_Generated = 3
+        Recieved_In_Factory = 10
     
     project = models.ForeignKey(Project,  on_delete=models.CASCADE, db_index=True)
     group_code = models.CharField(max_length=50, db_index=True, null=False, blank=False)
@@ -72,7 +73,7 @@ class Part(models.Model):
     
     status = models.IntegerField(default=0, help_text=" 0: 'To Approve', 1: 'Approved', 2: 'WIP', 3: 'WIP - Partially Loaded', 4: 'Item Packed', 10: 'Delivered', 99: 'Item Not Available', 100: '100% Completed'")
     distribution_vehicle_status = models.IntegerField(default=0, help_text=" 0: 'No Truck Data', 1: 'Truck Data Loaded', 2: 'Partially Loaded', 3: 'Un Loaded', 4: 'Loaded'")
-    vendor_status = models.IntegerField(default=0, help_text="  0: 'Pending', 1: 'QR Generated', 2: 'Package Allocation Done', 3: 'Packing Slip Generated'")
+    vendor_status = models.IntegerField(default=0, help_text="-3:Pending for acceptance,-2:Rejected by Vendor,  0: 'Pending', 1: 'QR Generated', 2: 'Package Allocation Done', 3: 'Packing Slip Generated'")
     vehicle_status = models.IntegerField(default=0, help_text=" 0: 'No Truck Data', 1: 'Truck Data Loaded', 2: 'Partially Loaded', 3: 'Un Loaded', 4: 'Loaded'")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -85,8 +86,9 @@ class Part(models.Model):
     scanned_packages = models.CharField(max_length=50, blank=True, null=True, default='')
     is_po_mo_mandatory = models.BooleanField(default=False, db_index=True, blank=True, null=True)
     accepted_time = models.DateTimeField(default=timezone.now)
-    remarks = models.TextField(default='' )
-
+    remarks = models.TextField(default='', blank=True, null=True)
+    qc_passed = models.BooleanField(default=False, db_index=True, blank=True, null=True)
+    assigned_time =  models.DateTimeField(default=timezone.now)
 
 
     def __str__(self):

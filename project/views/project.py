@@ -169,14 +169,78 @@ class  ProjectVendorSummaryView(APIView):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
         user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
-        parts = Part.objects.filter(
-            Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors)
-        ).order_by('mrd').select_related('project')
-        grouped_projects = defaultdict(list)
-        for part in parts:
-            grouped_projects[part.mrd].append(part.project)
+        type = request.query_params.get('type')
+
+        if type == 'new':
+            parts = Part.objects.filter(
+                Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors) & Q(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
+            ).order_by('mrd').select_related('project')
+            pending_for_acceptance=True
+        else:
+            parts = Part.objects.filter(
+                Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors) & Q(vendor_status__gte=Part.VendorStatus.Pending.value)
+            ).order_by('mrd').select_related('project')
+            pending_for_acceptance=False
 
         current_date = now().date()
+
+        if type == 'overdue': 
+            filtered_parts = []
+            for part in parts:
+                try:
+                    mrd_date = datetime.strptime(part.mrd, "%Y-%m-%d").date()
+                    if mrd_date >= current_date:
+                        continue  # Skip non-overdue parts
+                    filtered_parts.append(part)
+                except ValueError:
+                    continue 
+        else :
+            filtered_parts = parts
+        grouped_projects = defaultdict(list)
+        for part in filtered_parts:
+            grouped_projects[part.mrd].append(part.project)
+        
+        flattened_projects = []
+        for mrd_date, projects in grouped_projects.items():
+            mrd_date_obj = datetime.strptime(mrd_date, "%Y-%m-%d").date()
+            due_days_remaining = (mrd_date_obj - current_date).days
+
+            for project in set(projects):  # Avoid duplicate projects
+                serializer = ProjectVendorSummarySerializer(
+                    project,
+                    context={
+                        'user_vendors': user_vendors,
+                        'mrd': mrd_date,
+                        'due_days': due_days_remaining,
+                        'pending_for_acceptance': pending_for_acceptance
+                    }
+                )
+                flattened_projects.append(serializer.data)
+
+
+        # Step 4: Apply pagination
+        paginator = self.pagination_class()
+        paginated_data = paginator.paginate_queryset(flattened_projects, request)
+
+        return paginator.get_paginated_response(paginated_data)
+
+
+class  ProjectNewlyAddedVendorSummaryView(APIView):
+    pagination_class = MRDGroupedPagination
+    def get(self, request):
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        parts = Part.objects.filter(
+            Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors) & Q(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
+        ).order_by('mrd').select_related('project')
+        current_date = now().date()
+
+        filtered_parts = parts
+        grouped_projects = defaultdict(list)
+        for part in filtered_parts:
+            grouped_projects[part.mrd].append(part.project)
+        
         flattened_projects = []
         for mrd_date, projects in grouped_projects.items():
             mrd_date_obj = datetime.strptime(mrd_date, "%Y-%m-%d").date()
@@ -199,14 +263,7 @@ class  ProjectVendorSummaryView(APIView):
         paginated_data = paginator.paginate_queryset(flattened_projects, request)
 
         return paginator.get_paginated_response(paginated_data)
-        
-        
-        # projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
-        # paginator = PageNumberPagination()
-        # paginator.page_size = 100  # You can override the default page size here
-        # paginated_projects = paginator.paginate_queryset(projects, request)
-        # serializer = ProjectVendorSummarySerializer(paginated_projects, many=True,  context={'user_vendors': user_vendors} )
-        # return paginator.get_paginated_response(serializer.data)
+
 
 
 class ProjectSummaryView(APIView):

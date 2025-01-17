@@ -5,6 +5,7 @@ from project.models.package_index import PackageIndex
 from project.models.part_log import PartLog
 from project.models.parts import Part
 from project.models.project import Project
+from project.models.rejection_history import VendorRejectionHistory
 from project.models.vehicle import Vehicle
 
 # Register your models here.
@@ -24,6 +25,13 @@ class ProjectAdmin(admin.ModelAdmin):
 admin.site.register(Project, ProjectAdmin)
 
 
+class VendorRejectionHistoryAdmin(admin.ModelAdmin):
+    list_per_page = 50
+    list_display = [f.name for f in VendorRejectionHistory._meta.fields]
+    search_fields = ['part__part_description','part__part_number']
+    list_filter = ['vendor']
+
+admin.site.register(VendorRejectionHistory, VendorRejectionHistoryAdmin)
 
 class PartAdmin(admin.ModelAdmin):
     list_per_page = 50

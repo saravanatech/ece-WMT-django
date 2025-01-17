@@ -9,12 +9,19 @@ from masters.models.vendor import VendorMasters
 from project.models.package_index import PackageIndex
 from project.models.part_log import PartLog
 from project.models.parts import Part
+from project.models.rejection_history import VendorRejectionHistory
 from project.models.vehicle import Vehicle
 from project.serializer.part import PartSerializer, VendorStatsSerializer
 import json
 from django.db.models import Q
 
+from project.serializer.projectIndex import PackageIndexSerializer
 from users.models import UserProfile
+from rest_framework.pagination import PageNumberPagination
+from django.utils import timezone
+
+from project.utils import fetchPackingSlipQRCodeDetails
+
 
 
 class BulkPartUpdateView(APIView):
@@ -277,10 +284,123 @@ class MovePartToVendorView(APIView):
                 part = Part.objects.get(id=part_id)
                 part.status = Part.Status.MovedToVendor.value
                 part.updated_by = self.request.user
-                if vendor.auto_accept == False:
-                    part.vendor_status = Part.VendorStatus.Pending_for_acceptance.value
+                part.vendor_status = Part.VendorStatus.Pending_for_acceptance.value
+                part.assigned_time = timezone.now() 
                 part.save()
                 PartLog.objects.create(part=part,project=part.project, logMessage="Status changed to Moved to Vendor", type='info', created_by=request.user)
+                PartLog.objects.create(part=part,project=part.project, logMessage="Assigned to vendor for acceptance ", type='info', created_by=request.user)
+                serializer = PartSerializer(part, data=part_data, partial=True)
+                if serializer.is_valid(): 
+                    updated_parts.append(serializer.data)
+            except Part.DoesNotExist:
+                return Response({'error': f'Part with ID {part_id} not found.'}, status=status.HTTP_404_NOT_FOUND)
+                
+        return Response(updated_parts, status=status.HTTP_200_OK)
+    
+
+class VendorAcceptedPartsView(APIView):
+    def post(self, request):
+        parts_data = request.data
+        
+        if not isinstance(parts_data, list):
+            return Response({'error': 'Input data must be a list of parts.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        updated_parts = []
+        for part_data in parts_data:
+            part_id = part_data.get('id')
+            if not part_id:
+                return Response({'error': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                part = Part.objects.get(id=part_id)
+                part.updated_by = self.request.user
+                part.vendor_status = Part.VendorStatus.Pending.value
+                part.save()
+                PartLog.objects.create(part=part,project=part.project,
+                                        logMessage=f'Vendor accepted the part for MRD - {part.mrd} ', 
+                                        type='info',
+                                        created_by=request.user)
+                serializer = PartSerializer(part, data=part_data, partial=True)
+                if serializer.is_valid(): 
+                    updated_parts.append(serializer.data)
+            except Part.DoesNotExist:
+                return Response({'error': f'Part with ID {part_id} not found.'}, status=status.HTTP_404_NOT_FOUND)
+                
+        return Response(updated_parts, status=status.HTTP_200_OK)
+
+class VendorRejectedPartsView(APIView):
+    def post(self, request):
+        parts_data = request.data
+        
+        if not isinstance(parts_data, list):
+            return Response({'error': 'Input data must be a list of parts.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        updated_parts = []
+        for part_data in parts_data:
+            part_id = part_data.get('id')
+            if not part_id:
+                return Response({'error': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                part = Part.objects.get(id=part_id)
+                part.updated_by = self.request.user
+                part.vendor_status = Part.VendorStatus.Req_rejected.value
+                part.remarks = part_data['vendorRejectionReason']
+                part.save()
+                mrd = part.mrd
+                PartLog.objects.create(part=part,project=part.project,
+                                        logMessage=f'Vendor rejected the part for MRD - {part.mrd}', 
+                                        type='info',
+                                        created_by=request.user)
+                VendorRejectionHistory.objects.create(part=part,
+                                                      mrd=mrd,
+                                                      vendor=part.vendor,
+                                                      created_by=request.user,
+                                                      reason=part_data['vendorRejectionReason'])  
+                serializer = PartSerializer(part, data=part_data, partial=True)
+                if serializer.is_valid(): 
+                    updated_parts.append(serializer.data)
+            except Part.DoesNotExist:
+                return Response({'error': f'Part with ID {part_id} not found.'}, status=status.HTTP_404_NOT_FOUND)
+       
+        return Response(updated_parts, status=status.HTTP_200_OK)
+
+
+class ProjectPagination(PageNumberPagination):
+    page_size = 50  # Number of projects per page
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+class FetchRejectedPartsView(APIView):
+    pagination_class = ProjectPagination
+    def get(self, request):
+        
+        parts = Part.objects.filter(status=Part.Status.MovedToVendor.value,
+                                     vendor_status=Part.VendorStatus.Req_rejected.value).order_by('-updated_at')
+        paginator = self.pagination_class()
+        paginated_projects = paginator.paginate_queryset(parts, request)
+        part_serializer = PartSerializer(paginated_projects, many=True)
+        
+        return paginator.get_paginated_response(part_serializer.data)
+    
+    def post(self, request):
+        parts_data = request.data
+        if not isinstance(parts_data, list):
+            return Response({'error': 'Input data must be a list of parts.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+        updated_parts = []
+        for part_data in parts_data:
+            part_id = part_data.get('id')
+            if not part_id:
+                return Response({'error': 'Each part must have an ID.'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                part = Part.objects.get(id=part_id)
+                part.updated_by = self.request.user
+                part.status = Part.Status.Approved.value
+                part.vendor_status = Part.VendorStatus.Pending.value
+                part.save()
+                PartLog.objects.create(part=part,project=part.project,
+                                        logMessage=f'Factory acknowledged the rejection ', 
+                                        type='info',
+                                        created_by=request.user)
                 serializer = PartSerializer(part, data=part_data, partial=True)
                 if serializer.is_valid(): 
                     updated_parts.append(serializer.data)
@@ -627,3 +747,61 @@ class ScannedWhileUnLoading(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
         
                 
+class GoodsRecieved(APIView):
+    def post(self, request):
+        qr_data = request.data
+        package_indexes = fetchPackingSlipQRCodeDetails(qr_data)
+        if len(package_indexes) == 0:
+            return Response({'message': "Scan Rejected -  QR Code is not valid" }, status=status.HTTP_400_BAD_REQUEST)
+
+        for package_index in package_indexes:
+            part = package_index.part
+            if part.vendor_status > Part.VendorStatus.Packing_Slip_Generated.value:
+                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {part.project.project_no} already received' }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if part.vendor_status != Part.VendorStatus.Packing_Slip_Generated.value:
+                return Response({'message': f'Scan Rejected - {part} must be in Packing Slip Generated status' }, status=status.HTTP_400_BAD_REQUEST)
+            
+            part.vendor_status = Part.VendorStatus.Recieved_In_Factory.value
+            part.qc_passed = True
+            part.save()
+            PartLog.objects.create(
+                    part=part,
+                    project=part.project,
+                    logMessage=f"Goods Recevied successfully in package - {package_index.packageName}",
+                    type='info',
+                    created_by=request.user
+                )
+        
+        serliazlier = PackageIndexSerializer(package_indexes, many=True)
+        return Response(serliazlier.data, status=status.HTTP_200_OK)
+
+
+
+class GoodsQCFailed(APIView):
+    def post(self, request):
+        qr_data = request.data
+        package_indexes = fetchPackingSlipQRCodeDetails(qr_data)
+        if len(package_indexes) == 0:
+            return Response({'message': "Scan Rejected -  QR Code is not valid" }, status=status.HTTP_400_BAD_REQUEST)
+
+        for package_index in package_indexes:
+            part = package_index.part
+            if part.vendor_status != Part.VendorStatus.Recieved_In_Factory.value:
+                return Response({'message': f'Scan Rejected - Goods not yet received' }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if part.qc_passed == False:
+                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {part.project.project_no} already quality rejected' }, status=status.HTTP_400_BAD_REQUEST)
+            
+            part.qc_passed = False
+            part.save()
+            PartLog.objects.create(
+                    part=part,
+                    project=part.project,
+                    logMessage=f"Quality Check failed in package - {package_index.packageName}",
+                    type='info',
+                    created_by=request.user
+                )
+        
+        serliazlier = PackageIndexSerializer(package_indexes, many=True)
+        return Response(serliazlier.data, status=status.HTTP_200_OK)

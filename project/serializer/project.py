@@ -88,10 +88,13 @@ class ProjectVendorSummarySerializer(serializers.ModelSerializer):
     count_of_delivered = serializers.SerializerMethodField()
     mrd_date = serializers.SerializerMethodField()
     due_days_remaning = serializers.SerializerMethodField()
+    pending_for_acceptance = serializers.SerializerMethodField()
+
     class Meta:
         model = Project
         fields = ['customerName', 'due_days_remaning', 'mrd_date',
-                  'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered']
+                  'productType', 'projectName', 'projectNo', 'total_parts_count',
+                 'count_of_packingSlip_generated', 'count_of_delivered', 'pending_for_acceptance']
 
     def get_mrd_date(self, obj):
         mrd_date = self.context.get('mrd', None)
@@ -101,6 +104,9 @@ class ProjectVendorSummarySerializer(serializers.ModelSerializer):
         due_days = self.context.get('due_days', None)
         return due_days
 
+    def get_pending_for_acceptance(self, obj):
+        pending_for_acceptance =  self.context.get('pending_for_acceptance', False)
+        return pending_for_acceptance
 
     def get_total_parts_count(self, obj):
         user_vendors = self.context.get('user_vendors')
