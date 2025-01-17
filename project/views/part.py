@@ -314,6 +314,7 @@ class VendorAcceptedPartsView(APIView):
                 part = Part.objects.get(id=part_id)
                 part.updated_by = self.request.user
                 part.vendor_status = Part.VendorStatus.Pending.value
+                part.accepted_time = timezone.now()
                 part.save()
                 PartLog.objects.create(part=part,project=part.project,
                                         logMessage=f'Vendor accepted the part for MRD - {part.mrd} ', 
