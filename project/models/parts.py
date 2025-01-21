@@ -89,7 +89,7 @@ class Part(models.Model):
     remarks = models.TextField(default='', blank=True, null=True)
     qc_passed = models.BooleanField(default=False, db_index=True, blank=True, null=True)
     assigned_time =  models.DateTimeField(default=timezone.now)
-
+    received_time =  models.DateTimeField(blank=True, null=True, db_index=True)
 
     def __str__(self):
         return str(self.project.project_no+" - "+self.part_number+" - "+ self.group_code) 

@@ -189,7 +189,7 @@ class VendorStatsView(APIView):
                                              status=Part.Status.MovedToVendor.value)
 
         # Total number of parts assigned
-        total_parts_assigned = parts_queryset.count()
+        total_parts_assigned = parts_queryset.filter(vendor_status__gt=-1).count()
 
         # Total number of overdue parts
         overdue_parts = parts_queryset.filter(
@@ -354,6 +354,7 @@ class VendorRejectedPartsView(APIView):
                 VendorRejectionHistory.objects.create(part=part,
                                                       mrd=mrd,
                                                       vendor=part.vendor,
+                                                      assigned_on=part.assigned_time,
                                                       created_by=request.user,
                                                       reason=part_data['vendorRejectionReason'])  
                 serializer = PartSerializer(part, data=part_data, partial=True)
@@ -747,8 +748,14 @@ class ScannedWhileUnLoading(APIView):
         serializer = PartSerializer(updated_parts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-                
+
+class PartPagenation(PageNumberPagination):
+    page_size = 100  # Number of projects per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class GoodsRecieved(APIView):
+    pagination_class = PartPagenation
     def post(self, request):
         qr_data = request.data
         package_indexes = fetchPackingSlipQRCodeDetails(qr_data)
@@ -765,6 +772,7 @@ class GoodsRecieved(APIView):
             
             part.vendor_status = Part.VendorStatus.Recieved_In_Factory.value
             part.qc_passed = True
+            part.received_time = timezone.now()
             part.save()
             PartLog.objects.create(
                     part=part,
@@ -776,10 +784,24 @@ class GoodsRecieved(APIView):
         
         serliazlier = PackageIndexSerializer(package_indexes, many=True)
         return Response(serliazlier.data, status=status.HTTP_200_OK)
+    
+    def get(self, request):
+        # Query to fetch the parts related to the vendor
+        parts_queryset = Part.objects.filter(
+            status=Part.Status.MovedToVendor.value,
+            vendor_status=Part.VendorStatus.Recieved_In_Factory.value
+            ).order_by('-updated_at')
+        paginator = self.pagination_class()
+        paginated_projects = paginator.paginate_queryset(parts_queryset, request)
+        
+        serializer = PartSerializer(paginated_projects, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 
 
 class GoodsQCFailed(APIView):
+    pagination_class = PartPagenation
     def post(self, request):
         qr_data = request.data
         package_indexes = fetchPackingSlipQRCodeDetails(qr_data)
@@ -806,3 +828,16 @@ class GoodsQCFailed(APIView):
         
         serliazlier = PackageIndexSerializer(package_indexes, many=True)
         return Response(serliazlier.data, status=status.HTTP_200_OK)
+    
+    def get(self, request):
+        parts_queryset = Part.objects.filter(
+            status=Part.Status.MovedToVendor.value,
+            vendor_status=Part.VendorStatus.Recieved_In_Factory.value,
+            qc_passed=False
+            ).order_by('-updated_at')
+        paginator = self.pagination_class()
+        paginated_projects = paginator.paginate_queryset(parts_queryset, request)
+        
+        serializer = PartSerializer(paginated_projects, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    

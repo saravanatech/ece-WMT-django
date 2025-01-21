@@ -45,6 +45,7 @@ admin.site.register(Part, PartAdmin)
 class PartLogAdmin(admin.ModelAdmin):
     list_per_page = 50
     list_display = [f.name for f in PartLog._meta.fields]
+    search_fields=['project__project_name', 'project__project_no', 'part__group_code','part__po_mo_no', 'part__package_name', 'part__part_number','part__part_description']
 
 admin.site.register(PartLog, PartLogAdmin)
 

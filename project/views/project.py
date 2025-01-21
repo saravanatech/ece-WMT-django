@@ -33,11 +33,11 @@ class ProjectView(APIView):
         try:
             user = request.user
             user_profile = UserProfile.objects.get(user=user)
-            user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+            user_vendors = user_profile.vendor.all().values_list('name', flat=True)
             if mrd:
-                parts = Part.objects.filter(project__project_no=project_no, vendor__pk__in=user_vendors, mrd=mrd)
+                parts = Part.objects.filter(project__project_no=project_no, qr_code_scanning__in=user_vendors, mrd=mrd)
             else :
-                parts = Part.objects.filter(project__project_no=project_no, vendor__pk__in=user_vendors)
+                parts = Part.objects.filter(project__project_no=project_no, qr_code_scanning__in=user_vendors)
             if len(parts) == 0:
                     return Response({'error':True,'error_message': f'{project_no} - Project not found .'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -74,9 +74,9 @@ class ProjectListFilterPagenatedView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         project_no = request.query_params.get('project_no')
-        project_ids = Part.objects.filter(vendor__pk__in=user_vendors, 
+        project_ids = Part.objects.filter(qr_code_scanning__in=user_vendors, 
                                           project__project_no__icontains=project_no).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
 
@@ -97,7 +97,7 @@ class ProjectListMRDFilterPagenatedView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         mrd = request.query_params.get('mrd', '').strip()  # Fetch the mrd value from the request
         project_no = request.query_params.get('project_no', '').strip()  # Fetch the mrd value from the request
 
@@ -106,15 +106,15 @@ class ProjectListMRDFilterPagenatedView(APIView):
 
         if not project_no:
             parts = Part.objects.filter(
-                Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(vendor__pk__in=user_vendors)
+                Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(qr_code_scanning__in=user_vendors)
             ).order_by('mrd').select_related('project')
         elif not mrd:
             parts = Part.objects.filter(
-            Q(status=Part.Status.MovedToVendor.value) & Q(project__project_no__icontains=project_no) & Q(vendor__pk__in=user_vendors)
+            Q(status=Part.Status.MovedToVendor.value) & Q(project__project_no__icontains=project_no) & Q(qr_code_scanning__in=user_vendors)
             ).order_by('mrd').select_related('project')
         else:
             parts = Part.objects.filter(
-            Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(project__project_no__icontains=project_no) & Q(vendor__pk__in=user_vendors)
+            Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(project__project_no__icontains=project_no) & Q(qr_code_scanning__in=user_vendors)
             ).order_by('mrd').select_related('project')
 
         grouped_projects = defaultdict(list)
@@ -168,17 +168,17 @@ class  ProjectVendorSummaryView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         type = request.query_params.get('type')
 
         if type == 'new':
             parts = Part.objects.filter(
-                Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors) & Q(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
+                Q(status=Part.Status.MovedToVendor.value) & Q(qr_code_scanning__in=user_vendors) & Q(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
             ).order_by('mrd').select_related('project')
             pending_for_acceptance=True
         else:
             parts = Part.objects.filter(
-                Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors) & Q(vendor_status__gte=Part.VendorStatus.Pending.value)
+                Q(status=Part.Status.MovedToVendor.value) & Q(qr_code_scanning__in=user_vendors) & Q(vendor_status__gte=Part.VendorStatus.Pending.value)
             ).order_by('mrd').select_related('project')
             pending_for_acceptance=False
 
@@ -198,10 +198,13 @@ class  ProjectVendorSummaryView(APIView):
             filtered_parts = parts
         grouped_projects = defaultdict(list)
         for part in filtered_parts:
+            print(part.pk)
+            print(part.mrd)
             grouped_projects[part.mrd].append(part.project)
         
         flattened_projects = []
         for mrd_date, projects in grouped_projects.items():
+            if mrd_date is None: continue
             mrd_date_obj = datetime.strptime(mrd_date, "%Y-%m-%d").date()
             due_days_remaining = (mrd_date_obj - current_date).days
 
@@ -230,9 +233,9 @@ class  ProjectNewlyAddedVendorSummaryView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         parts = Part.objects.filter(
-            Q(status=Part.Status.MovedToVendor.value) & Q(vendor__pk__in=user_vendors) & Q(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
+            Q(status=Part.Status.MovedToVendor.value) & Q(qr_code_scanning__in=user_vendors) & Q(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
         ).order_by('mrd').select_related('project')
         current_date = now().date()
 
@@ -270,8 +273,8 @@ class ProjectSummaryView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
-        project_ids = Part.objects.filter(vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        project_ids = Part.objects.filter(qr_code_scanning__in=user_vendors).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(id__in=project_ids).order_by('created_at')
         
         paginator = PageNumberPagination()
@@ -280,7 +283,32 @@ class ProjectSummaryView(APIView):
         serializer = ProjectSummarySerializer(paginated_projects, many=True,  context={'user_vendors': user_vendors} )
         return paginator.get_paginated_response(serializer.data)
 
+class  ProjectSummaryFilterView(APIView):
+    def get(self, request):
+        mrd = request.query_params.get('mrd', '').strip()  # Fetch the mrd value from the request
+        project_no = request.query_params.get('project_no', '').strip()  # Fetch the mrd value from the request
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
+        if not project_no:
+            project_ids = Part.objects.filter(
+                 Q(mrd__icontains=mrd) & Q(qr_code_scanning__in=user_vendors)
+            ).values_list('project_id', flat=True).distinct()
+        elif not mrd:  
+            project_ids = Part.objects.filter(
+                 Q(project__project_no__icontains=project_no) & Q(qr_code_scanning__in=user_vendors)
+            ).values_list('project_id', flat=True).distinct() 
+        else:
+            project_ids = Part.objects.filter(
+                 Q(mrd__icontains=mrd) & Q(qr_code_scanning__in=user_vendors) &   Q(project__project_no__icontains=project_no)
+            ).values_list('project_id', flat=True).distinct()
+        projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
 
+        serializer = ProjectSummarySerializer(projects, many=True, context={
+            'user_vendors': user_vendors,
+            'mrd': mrd,
+        })
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class  ProjectVendorSummaryFilterView(APIView):
     pagination_class = MRDGroupedPagination
@@ -288,9 +316,9 @@ class  ProjectVendorSummaryFilterView(APIView):
         project_no = request.query_params.get('project_no')
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         parts = Part.objects.filter(
-            Q(status=Part.Status.MovedToVendor.value) & Q(project__project_no__icontains=project_no) & Q(vendor__pk__in=user_vendors)
+            Q(status=Part.Status.MovedToVendor.value) & Q(project__project_no__icontains=project_no) & Q(qr_code_scanning__in=user_vendors)
         ).order_by('mrd').select_related('project')
         grouped_projects = defaultdict(list)
         for part in parts:
@@ -319,23 +347,6 @@ class  ProjectVendorSummaryFilterView(APIView):
 
         return paginator.get_paginated_response(paginated_data)
 
-        # project_ids = Part.objects.filter(project__project_no__icontains=project_no, vendor__pk__in=user_vendors).values_list('project_id', flat=True).distinct()
-        # projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
-
-        # serializer = ProjectVendorSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
-        # return Response(serializer.data, status=status.HTTP_200_OK)
-
-class  ProjectSummaryFilterView(APIView):
-    def get(self, request):
-        project_no = request.query_params.get('project_no')
-        user = request.user
-        user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
-        project_ids = Part.objects.filter(project__project_no__icontains=project_no).values_list('project_id', flat=True).distinct()
-        projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
-
-        serializer = ProjectSummarySerializer(projects, many=True, context={'user_vendors': user_vendors})
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
