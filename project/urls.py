@@ -3,7 +3,7 @@ from django.urls import path
 from project.views.activity_log import ActivityLogCreateView
 from project.views.part import BulkPartUpdateView, FetchRejectedPartsView, GoodsQCFailed, GoodsRecieved, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, PartsForAcceptance, PartsForAcceptanceResponse, ScannedWhileLoadingView, ScannedWhileUnLoading, VendorAcceptedPartsView, VendorRejectedPartsView, VendorStatsView
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
-from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectNewlyAddedVendorSummaryView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
+from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectListWithCountView, ProjectNewlyAddedVendorSummaryView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
 from project.views.vehicle import ActiveDistributionCenterVehicleListView, ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
 
 from .views import EbomUploadView, ProjectView
@@ -17,6 +17,7 @@ urlpatterns = [
     path('list/part_status/', ProjectListFilterPartStatusView.as_view(), name='project-status-list'),
     path('list/part_status_projects/', ProjectListFilterStatusPagenatedView.as_view(), name='project-status-list-pagenated'),
     path('list/part_for_project_ids/', ProjectListFilterPartStatusAndProjectIdView.as_view(), name='parts for project ids'),
+    path('list/part_status_projects_count/', ProjectListWithCountView.as_view(), name='project-status-list-count'),
     path('part-for-acceptance/', PartsForAcceptance.as_view(), name='parts-accptance'),
     path('partsForAcceptanceResponse', PartsForAcceptanceResponse.as_view(), name='partsForAcceptanceResponse'),
     path('vendor-stats/', VendorStatsView.as_view(), name='vendor-stats'),

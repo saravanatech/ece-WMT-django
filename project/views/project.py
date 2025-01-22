@@ -348,10 +348,29 @@ class  ProjectVendorSummaryFilterView(APIView):
         return paginator.get_paginated_response(paginated_data)
 
 
-
-
-
 class ProjectListFilterStatusPagenatedView(APIView):
+    pagination_class = ProjectPagination
+
+    def get(self, request):
+        status_params = request.GET.getlist('status')
+        summary =  request.query_params.get('summary') 
+        project_ids = Part.objects.filter(status__in=status_params).values_list('project_id', flat=True).distinct()
+        projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_projects = paginator.paginate_queryset(projects, request)
+ 
+        # Serialize paginated project data only
+        if summary == '1':
+            project_serializer = ProjectSummarySerializer(paginated_projects, many=True)
+        else:
+            project_serializer = ProjectLiteSerializer(paginated_projects, many=True)
+        
+        return paginator.get_paginated_response(project_serializer.data)
+    
+
+class ProjectListWithCountView(APIView):
     pagination_class = ProjectPagination
 
     def get(self, request):
@@ -364,24 +383,30 @@ class ProjectListFilterStatusPagenatedView(APIView):
         paginated_projects = paginator.paginate_queryset(projects, request)
         
         # Serialize paginated project data only
-        project_serializer = ProjectLiteSerializer(paginated_projects, many=True)
+        project_serializer = ProjectSummarySerializer(paginated_projects, many=True)
         
         return paginator.get_paginated_response(project_serializer.data)
-    
 
 class ProjectListFilterPartStatusAndProjectIdView(APIView):
     def get(self, request):
         status_list = request.GET.getlist('status')
         id = request.query_params.get('projectId')
+        type = request.query_params.get('type')
         projects = Project.objects.filter(pk=id,part__status__in=status_list).distinct().order_by('created_at')
         
         # Custom serialization to include only parts with status 0
         result = []
         for project in projects:
-            parts = Part.objects.filter(project=project, status__in=status_list)
+            if type == 'qcFailed':
+                parts = Part.objects.filter(project=project, status__in=status_list,qc_passed=False, vendor_status=Part.VendorStatus.Recieved_In_Factory.value)
+            elif type == 'goodsReceipt':
+                parts = Part.objects.filter(project=project, status__in=status_list, vendor_status=Part.VendorStatus.Recieved_In_Factory.value)
+            else :
+                parts = Part.objects.filter(project=project, status__in=status_list)
             part_serializer = PartSerializer(parts, many=True)
             project_data = ProjectSerializer(project).data
             project_data['parts'] = part_serializer.data
             result.append(project_data)
         
         return Response(result, status=status.HTTP_200_OK)
+    

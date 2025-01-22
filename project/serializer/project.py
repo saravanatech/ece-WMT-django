@@ -55,7 +55,7 @@ class ProjectSummarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['customerName',
+        fields = ['id','customerName',
                   'count_of_goods_received',
                   'count_of_qc_failed',
                   'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered']
