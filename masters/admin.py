@@ -117,6 +117,7 @@ class ProductGroupMasterAdmin(admin.ModelAdmin):
                         status = True if row.get('Status') == 'L' else False
                         wh_team_name = row.get('WHTeamName', '')
                         source_of_supply = row.get('Source of supply', '')
+                        no_of_packages = row.get('NoOfPackages', 1)
                         s_no =  row.get('S.No', 0)
                         qr_type = row.get('QR Code generation type', 'Type-1')
                         qr_code_scanning =  row.get('QR Code Scanning', '')
@@ -142,7 +143,8 @@ class ProductGroupMasterAdmin(admin.ModelAdmin):
                                     'qr_type': qr_type,
                                     'use_qr_code_scanning':use_qr_code_scanning,
                                     'qr_code_scanning':qr_code_scanning,
-                                    'is_po_mo_mandatory':is_po_mo_mandatory
+                                    'is_po_mo_mandatory':is_po_mo_mandatory,
+                                    'no_of_packages':no_of_packages
                                 }
                             )
                             if created:

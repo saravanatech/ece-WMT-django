@@ -21,6 +21,7 @@ class ProductGroupMaster(models.Model):
     use_qr_code_scanning = models.BooleanField(default=False)
     qr_code_scanning=models.CharField(max_length=100, db_index=True, null=True, blank=True)
     is_po_mo_mandatory = models.BooleanField(default=False)
+    no_of_packages = models.IntegerField(default=1)
     
     class Meta:
         unique_together = ('product', 'group_code')

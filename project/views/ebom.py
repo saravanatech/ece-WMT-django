@@ -45,7 +45,11 @@ class EbomUploadView(APIView):
                         part.qr_code_scanning = product_grouping.qr_code_scanning
                         part.use_qr_code_scanning = product_grouping.use_qr_code_scanning
                         part.is_po_mo_mandatory = product_grouping.is_po_mo_mandatory
-                        part.po_mo_no = part.po_mo_no if part.is_po_mo_mandatory else '';
+                        part.po_mo_no = part.po_mo_no if part.is_po_mo_mandatory else ''
+                        part.no_of_packages = product_grouping.no_of_packages
+                        print(part.group_code)
+
+                        print(part.no_of_packages)
                         part.save()                                           
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
