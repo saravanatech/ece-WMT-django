@@ -181,11 +181,11 @@ class VendorStatsView(APIView):
     def get(self, request):
         user = request.user
         user_profile = UserProfile.objects.get(user=user)
-        user_vendors = user_profile.vendor.all().values_list('pk', flat=True)
+        user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         today = now().date()
 
         # Query to fetch the parts related to the vendor
-        parts_queryset = Part.objects.filter(vendor__pk__in=user_vendors, 
+        parts_queryset = Part.objects.filter(qr_code_scanning__in=user_vendors, 
                                              status=Part.Status.MovedToVendor.value)
 
         # Total number of parts assigned
