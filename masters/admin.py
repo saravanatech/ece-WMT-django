@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 
 from masters.models.product_group import ProductGroupMaster, ProductGroupMasterUploadForm
+from masters.models.product_group_package import ProductGroupPackageMaster, ProductGroupPackageMasterUploadForm
 from masters.models.vehicle_type import VehicleTypeMasters
 from masters.models.vendor import VendorMasterUploadForm, VendorMasters
 
@@ -249,4 +250,80 @@ class VehicleTypeMastersAdmin(admin.ModelAdmin):
     list_filter = ['status']
 
 admin.site.register(VehicleTypeMasters, VehicleTypeMastersAdmin)
+
+
+class ProductGroupPackageMasterAdmin(admin.ModelAdmin):
+    change_list_template = "master_change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('upload/', self.upload_file, name='masters_productgroupmaster_upload'),
+        ]
+        return custom_urls + urls
+    
+    def upload_file(self, request):
+        if request.method == "POST":
+            form = ProductGroupMasterUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                file = form.cleaned_data['file']
+                try:
+                    df = pd.read_excel(file, engine='openpyxl')
+                    updated_count = 0
+                    created_count = 0
+                    errors = []
+                    for index, row in df.iterrows():
+                        product = row.get('Product', '')
+                        group_code = row['GroupCode']
+                        qty =  row.get('Qty', 1)
+                        no_of_packages = row.get('NoOfPackages', 1)
+
+
+                        # Check if ProductGroupMaster record exists with the same product and group_code
+                        try:
+                            obj, created = ProductGroupPackageMaster.objects.update_or_create(
+                                product=product,
+                                group_code=group_code,
+                                qty=qty,
+                                defaults={
+                                    'product': product,
+                                    'group_code': group_code,
+                                    'qty': qty,
+                                    'no_of_packages': no_of_packages
+                                }
+                            )
+                            if created:
+                                created_count += 1
+                            else:
+                                updated_count += 1
+                            
+                        except IntegrityError as e:
+                            messages.error(request, f"Error processing row: {str(e)}")
+
+                    if errors:
+                        for error in errors:
+                            messages.error(request, error)
+
+                    messages.success(request, f"Product group masters uploaded: {created_count} created, {updated_count} updated.")
+                    return redirect('admin:masters_productgrouppackagemaster_changelist')  # Redirect to change list
+                except Exception as e:
+                    messages.error(request, f"Error uploading product group masters: {str(e)}")
+                    form.add_error('file', f"Error: {str(e)}")
+                    
+            else:
+                messages.error(request, "Form is not valid. Please check the file.")
+        
+        else:
+            form = ProductGroupPackageMasterUploadForm()
+        
+        return render(request, "master_upload.html", {"form": form})
+
+    list_per_page = 50
+    list_display = [f.name for f in ProductGroupPackageMaster._meta.fields]
+    search_fields = ['product', 'group_code']
+    list_filter = ['product']
+
+
+admin.site.register(ProductGroupPackageMaster, ProductGroupPackageMasterAdmin)
+
 

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from masters.models.product_group import ProductGroupMaster
+from masters.models.product_group_package import ProductGroupPackageMaster
 from project.models.parts import Part
 from project.models.project import Project
 from project.serializer.ebom import EbomSerializer
@@ -50,7 +51,12 @@ class EbomUploadView(APIView):
                         print(part.group_code)
 
                         print(part.no_of_packages)
-                        part.save()                                           
+                        part.save()   
+
+                    product_grouping_package = ProductGroupPackageMaster.objects.filter(product=project.product_type, group_code = part.group_code, qty=part.qty)
+                    if len(product_grouping_package) > 0:
+                        part.no_of_packages = product_grouping_package[0].no_of_packages
+                        part.save()      
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
