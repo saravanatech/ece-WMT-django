@@ -100,6 +100,7 @@ class ProjectListMRDFilterPagenatedView(APIView):
         user_vendors = user_profile.vendor.all().values_list('name', flat=True)
         mrd = request.query_params.get('mrd', '').strip()  # Fetch the mrd value from the request
         project_no = request.query_params.get('project_no', '').strip()  # Fetch the mrd value from the request
+        type = request.query_params.get('type', 'all').strip()  # Fetch the mrd value from the request
 
         if not mrd and not project_no:
             return Response({"error": "MRD date or Project No is required."}, status=400)
@@ -116,6 +117,10 @@ class ProjectListMRDFilterPagenatedView(APIView):
             parts = Part.objects.filter(
             Q(status=Part.Status.MovedToVendor.value) & Q(mrd__icontains=mrd) & Q(project__project_no__icontains=project_no) & Q(qr_code_scanning__in=user_vendors)
             ).order_by('mrd').select_related('project')
+        if type == 'new':
+            parts = parts.filter(vendor_status = Part.VendorStatus.Pending_for_acceptance.value)
+        else: 
+            parts = parts.exclude(vendor_status=Part.VendorStatus.Pending_for_acceptance.value)
 
         grouped_projects = defaultdict(list)
         for part in parts:
