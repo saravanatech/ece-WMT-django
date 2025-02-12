@@ -10,6 +10,7 @@ class PackageIndex(models.Model):
         Empty = 0
         AllocationDone = 1
         PackingSlipGenerated = 2
+        ReceivedInFactory=8
         Loaded = 10
         UnLoaded = 9
     

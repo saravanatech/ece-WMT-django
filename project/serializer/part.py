@@ -9,6 +9,7 @@ from project.serializer.projectIndex import PackageIndexSerializer
 class PartSerializer(serializers.ModelSerializer):
 
     projectNo = serializers.CharField(source='project.project_no')
+    projectId = serializers.CharField(source='project.id')
     groupCode = serializers.CharField(source='group_code')
     projectId = serializers.CharField(source='project.id')
     partDescription = serializers.CharField(source='part_description')
@@ -49,7 +50,7 @@ class PartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Part
         fields = [
-            'id','projectNo','projectId', 'groupCode', 'partDescription', 'partNumber',
+            'id','projectNo', 'projectId','groupCode', 'partDescription', 'partNumber',
             'qty', 'uom', 'poMoNo', 'vendor','vehicleStatus', 'useQRCodeScanning', 'QRCodeScanning',
             'fixedVariable', 'packageName','qrData', 'isEcn', 'partPackageMapping', 'scannedPackages',
             'noOfPackages', 'whtTeamName', 'sourceOfSupply', 'mrd', 'revisedMrgd', 'isPoMoMandatory',

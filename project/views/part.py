@@ -20,7 +20,7 @@ from users.models import UserProfile
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 
-from project.utils import fetchPackingSlipQRCodeDetails
+from project.utils import fetchPackingSlipForShortQRCodeDetails, fetchPackingSlipQRCodeDetails
 
 
 
@@ -612,7 +612,9 @@ class ScannedWhileLoadingView(APIView):
         for part_id in parts:
             try :
               part = Part.objects.get(id=part_id)
-              print(part)
+              if part.vendor_status != Part.VendorStatus.Recieved_In_Factory.value:
+                    return Response({'message': "Scan Rejected - " + package_name + " not yet received" }, status=status.HTTP_400_BAD_REQUEST)
+
               if part.qr_type == 'Type-2':
                 packageIndexs = PackageIndex.objects.filter(part=part,packageName=package_name, packAgeIndex=package_index)
                 if len(packageIndexs)== 0:
@@ -625,7 +627,7 @@ class ScannedWhileLoadingView(APIView):
                         PartLog.objects.create(part=part,project=part.project, logMessage="Package scanned second time which was already loaded", type='error', created_by=request.user)
                         return Response({'message': package_name + " Already Loaded" }, status=status.HTTP_400_BAD_REQUEST)
                     packageIndex.status = PackageIndex.Status.Loaded.value
-                    packageIndex.save()
+                    packageIndex.save()   
               else:
                 try:
                     packageIndex = PackageIndex.objects.get(part=part,packageName=package_name,packAgeIndex=package_index)
@@ -758,29 +760,41 @@ class GoodsRecieved(APIView):
     pagination_class = PartPagenation
     def post(self, request):
         qr_data = request.data
+        
         package_indexes = fetchPackingSlipQRCodeDetails(qr_data)
         if len(package_indexes) == 0:
             return Response({'message': "Scan Rejected -  QR Code is not valid" }, status=status.HTTP_400_BAD_REQUEST)
 
         for package_index in package_indexes:
             part = package_index.part
-            if part.vendor_status > Part.VendorStatus.Packing_Slip_Generated.value:
+            if part.vendor_status > Part.VendorStatus.Packing_Slip_Generated.value or package_index.status > PackageIndex.Status.ReceivedInFactory.value:
                 return Response({'message': f'Scan Rejected -  {package_index.packageName} - {part.project.project_no} already received' }, status=status.HTTP_400_BAD_REQUEST)
             
             if part.vendor_status != Part.VendorStatus.Packing_Slip_Generated.value:
                 return Response({'message': f'Scan Rejected - {part} must be in Packing Slip Generated status' }, status=status.HTTP_400_BAD_REQUEST)
             
-            part.vendor_status = Part.VendorStatus.Recieved_In_Factory.value
-            part.qc_passed = True
-            part.received_time = timezone.now()
-            part.save()
+            package_index.status = PackageIndex.Status.ReceivedInFactory.value
+            package_index.save()
+            
+            recievedPackage = PackageIndex.objects.filter(
+                                                Q(packageName=part.package_name) &
+                                                Q(part=part) &
+                                                Q(status__lt= PackageIndex.Status.ReceivedInFactory.value)
+                                            )
+            if len(recievedPackage) == 0:
+                part.vendor_status = Part.VendorStatus.Recieved_In_Factory.value
+                part.qc_passed = True
+                part.received_time = timezone.now()
+                part.save()
+            
+            
             PartLog.objects.create(
-                    part=part,
-                    project=part.project,
-                    logMessage=f"Goods Recevied successfully in package - {package_index.packageName}",
-                    type='info',
-                    created_by=request.user
-                )
+                        part=part,
+                        project=part.project,
+                        logMessage=f" {package_index.packageName} - {package_index.packAgeIndex} Recevied successfully in package ",
+                        type='info',
+                        created_by=request.user
+                    )
         
         serliazlier = PackageIndexSerializer(package_indexes, many=True)
         return Response(serliazlier.data, status=status.HTTP_200_OK)
