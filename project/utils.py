@@ -3,8 +3,8 @@ from project.models.project import Project
 
 
 def fetchPackingSlipQRCodeDetails(qr_data):
-    type = qr_data.get('t', None)
-    if type == 'ps':
+    type = qr_data.get('t', '')
+    if 'ps' in type:
         return fetchPackingSlipForShortQRCodeDetails(qr_data)
     else:
         package_name = qr_data['packageName']
@@ -37,9 +37,18 @@ def fetchPackingSlipForShortQRCodeDetails(qr_data):
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
         return
-    
-    return PackageIndex.objects.filter(
-        packageName=package_name,
-        ProjectNo=project.project_no, 
-        revision=revision, 
-        packAgeIndex=package_index)
+    type = qr_data.get('t', None)
+
+    if type == 'ps2':
+        return PackageIndex.objects.filter(
+                part__group_code=groupd_code,
+                packageName=package_name,
+                ProjectNo=project.project_no, 
+                revision=revision, 
+                packAgeIndex=package_index)
+    else :
+        return PackageIndex.objects.filter(
+            packageName=package_name,
+            ProjectNo=project.project_no, 
+            revision=revision, 
+            packAgeIndex=package_index)

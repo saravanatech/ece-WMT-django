@@ -767,8 +767,8 @@ class GoodsRecieved(APIView):
 
         for package_index in package_indexes:
             part = package_index.part
-            if part.vendor_status > Part.VendorStatus.Packing_Slip_Generated.value or package_index.status > PackageIndex.Status.ReceivedInFactory.value:
-                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {part.project.project_no} already received' }, status=status.HTTP_400_BAD_REQUEST)
+            if part.vendor_status > Part.VendorStatus.Packing_Slip_Generated.value or package_index.status >= PackageIndex.Status.ReceivedInFactory.value:
+                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {package_index.packAgeIndex}  - {part.project.project_no} already received' }, status=status.HTTP_400_BAD_REQUEST)
             
             if part.vendor_status != Part.VendorStatus.Packing_Slip_Generated.value:
                 return Response({'message': f'Scan Rejected - {part} must be in Packing Slip Generated status' }, status=status.HTTP_400_BAD_REQUEST)
