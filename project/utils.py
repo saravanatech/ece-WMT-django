@@ -39,7 +39,6 @@ def fetchPackingSlipForShortQRCodeDetails(qr_data):
         return
     
     return PackageIndex.objects.filter(
-        part__group_code=groupd_code,
         packageName=package_name,
         ProjectNo=project.project_no, 
         revision=revision, 
