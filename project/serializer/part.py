@@ -10,6 +10,7 @@ class PartSerializer(serializers.ModelSerializer):
 
     projectNo = serializers.CharField(source='project.project_no')
     groupCode = serializers.CharField(source='group_code')
+    projectId = serializers.CharField(source='project.id')
     partDescription = serializers.CharField(source='part_description')
     partNumber = serializers.CharField(source='part_number')
     poMoNo = serializers.CharField(source='po_mo_no', allow_blank=True, allow_null=True)
@@ -46,7 +47,7 @@ class PartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Part
         fields = [
-            'id','projectNo', 'groupCode', 'partDescription', 'partNumber',
+            'id','projectNo','projectId', 'groupCode', 'partDescription', 'partNumber',
             'qty', 'uom', 'poMoNo', 'vendor','vehicleStatus', 'useQRCodeScanning', 'QRCodeScanning',
             'fixedVariable', 'packageName','qrData', 'isEcn', 'partPackageMapping', 'scannedPackages',
             'noOfPackages', 'whtTeamName', 'sourceOfSupply', 'mrd', 'revisedMrgd', 'isPoMoMandatory',
