@@ -25,6 +25,8 @@ def fetchPackingSlipQRCodeDetails(qr_data):
 #   "t":"ps"
 #   }
 def fetchPackingSlipForShortQRCodeDetails(qr_data):
+    qr_data = {key.lower(): value for key, value in qr_data.items()}
+
     content = qr_data['c']
     content_split = content.split(',')
     package_name = content_split[0]
@@ -41,14 +43,14 @@ def fetchPackingSlipForShortQRCodeDetails(qr_data):
 
     if type == 'ps2':
         return PackageIndex.objects.filter(
-                part__group_code=groupd_code,
-                packageName=package_name,
+                part__group_code__iexact=groupd_code,
+                packageName__iexact=package_name,
                 ProjectNo=project.project_no, 
                 revision=revision, 
                 packAgeIndex=package_index)
     else :
         return PackageIndex.objects.filter(
-            packageName=package_name,
+            packageName__iexact=package_name,
             ProjectNo=project.project_no, 
             revision=revision, 
             packAgeIndex=package_index)
