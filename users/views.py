@@ -14,6 +14,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
+from datetime import datetime
+from django.utils.timezone import now
+from datetime import timedelta
 
 from .serializers import ChangePasswordSerializer
 class RegisterAPIView(APIView):
@@ -43,9 +46,11 @@ class LoginAPIView(APIView):
                 if hasattr(user, 'profile') and user.profile.subscription_end < timezone.now().date():
                     return Response({'status': False, 'message': 'Login falied - Your subscription has expired.'})
 
-                if 'admin' not in user.username and 'developer' not in user.username:
-                    session = UserSession.objects.get(user=user, is_active=True)
-                    if session.is_active:
+                if 'admin' not in user.username:
+                    session = UserSession.objects.filter(user=user, is_active=True).first()
+                    # Check the last activity of user whether it is within 10 minutes or not
+                    activity = UserActivity.objects.filter(user=user, last_activity__gte=(now() - timedelta(minutes=10)))
+                    if activity and session and session.is_active:
                         return Response({'status':False, 'message': 'User already logged in another device'})
             except UserSession.DoesNotExist:
                 pass
