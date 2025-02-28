@@ -49,6 +49,9 @@ class LoginAPIView(APIView):
                 if 'admin' not in user.username and 'developer' not in user.username:
 =======
                 if 'admin' not in user.username:
+<<<<<<< HEAD
+>>>>>>> 35d65bd (Restrict login url to update last_activity and review changes)
+=======
 >>>>>>> 35d65bd (Restrict login url to update last_activity and review changes)
                     session = UserSession.objects.filter(user=user, is_active=True, last_activity__gte=(now() - timedelta(minutes=10))).first()
                     if session:
