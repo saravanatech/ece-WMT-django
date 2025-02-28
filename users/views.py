@@ -43,7 +43,7 @@ class LoginAPIView(APIView):
                 if hasattr(user, 'profile') and user.profile.subscription_end < timezone.now().date():
                     return Response({'status': False, 'message': 'Login falied - Your subscription has expired.'})
 
-                if 'admin' not in user.username:
+                if 'admin' not in user.username and 'developer' not in user.username:
                     session = UserSession.objects.get(user=user, is_active=True)
                     if session.is_active:
                         return Response({'status':False, 'message': 'User already logged in another device'})
