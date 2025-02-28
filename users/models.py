@@ -71,7 +71,6 @@ class UserActivity(models.Model):
     type = models.CharField(max_length=255)
     activity = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
-    last_activity = models.DateTimeField(default=timezone.now, blank=True, null=True)
 
 
     def __str__(self):
@@ -83,6 +82,8 @@ class UserSession(models.Model):
     session_key = models.CharField(max_length=255, unique=True)
     login_time = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    last_activity = models.DateTimeField(default=timezone.now, blank=True, null=True)
+
 
     def __str__(self):
         return f"{self.user.username} - {self.session_key}"

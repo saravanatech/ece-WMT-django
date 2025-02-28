@@ -1,20 +1,23 @@
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import AnonymousUser
-from datetime import datetime
+from django.utils.timezone import now
 
-from users.models import UserActivity
+from users.models import UserSession
 
 class ActiveUserMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
+        login_paths = ['/user/login/', '/user/fetch_user_data/']
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Token '):
             token = auth_header.split(' ')[1]
             try:
-                request.user = Token.objects.get(key=token).user.id
-                UserActivity.objects.filter(id=request.user).update(last_activity=datetime.now())
+                if request.path not in login_paths: 
+                    request.user = Token.objects.select_related('user').get(key=token).user
+                    print ("coming first here")
+                    UserSession.objects.update_or_create(user=request.user, defaults={"last_activity": now()})
             except Token.DoesNotExist:
                 request.user = AnonymousUser()
                 print("❌ Token Authentication Failed: Invalid token")
