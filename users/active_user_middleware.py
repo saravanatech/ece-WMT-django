@@ -9,14 +9,13 @@ class ActiveUserMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        login_paths = ['/user/login/', '/user/fetch_user_data/']
+        login_paths = ['/user/login/', '/login/', '/user/fetch_user_data/']
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Token '):
             token = auth_header.split(' ')[1]
             try:
                 if request.path not in login_paths: 
                     request.user = Token.objects.select_related('user').get(key=token).user
-                    print ("coming first here")
                     UserSession.objects.update_or_create(user=request.user, defaults={"last_activity": now()})
             except Token.DoesNotExist:
                 request.user = AnonymousUser()

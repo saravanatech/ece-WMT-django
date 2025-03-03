@@ -40,20 +40,24 @@ class LoginAPIView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Login the user        
+            # Login the user
             try:
                 if hasattr(user, 'profile') and user.profile.subscription_end < timezone.now().date():
                     return Response({'status': False, 'message': 'Login falied - Your subscription has expired.'})
 
-                if 'admin' not in user.username:
+                if 'admin' not in user.username and 'developer' not in user.username:
                     session = UserSession.objects.filter(user=user, is_active=True, last_activity__gte=(now() - timedelta(minutes=10))).first()
                     if session:
                         return Response({'status':False, 'message': 'User already logged in another device'})
             except UserSession.DoesNotExist:
                 pass
+            
             login(request, user)
-            # Generate a token for the user
-            token, _ = Token.objects.get_or_create(user=user)
+
+            # Check if token exists, delete it if found
+            Token.objects.filter(user=user).delete()
+            # Create a new token
+            token = Token.objects.create(user=user)
             serializer = UserSerializer(user)
 
             UserSession.objects.update_or_create(
