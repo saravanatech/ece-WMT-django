@@ -194,7 +194,7 @@ class VendorStatsView(APIView):
         # Total number of overdue parts
         overdue_parts = parts_queryset.filter(
             mrd__isnull=False
-        ).filter(
+        ).exclude(vendor_status=-3).filter(
             mrd__lt=today.strftime("%Y-%m-%d")
         ).count()
 
