@@ -128,13 +128,13 @@ class ProjectVendorSummarySerializer(serializers.ModelSerializer):
     mrd_date = serializers.SerializerMethodField()
     due_days_remaning = serializers.SerializerMethodField()
     pending_for_acceptance = serializers.SerializerMethodField()
-    count_of_received_in_factory = serializers.SerializerMethodField()
+    count_of_goods_received = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
         fields = ['customerName', 'due_days_remaning', 'mrd_date',
                   'productType', 'projectName', 'projectNo', 'total_parts_count',
-                 'count_of_packingSlip_generated', 'count_of_delivered', 'pending_for_acceptance', 'count_of_received_in_factory']
+                 'count_of_packingSlip_generated', 'count_of_delivered', 'pending_for_acceptance', 'count_of_goods_received']
 
     def get_mrd_date(self, obj):
         mrd_date = self.context.get('mrd', None)
@@ -166,7 +166,7 @@ class ProjectVendorSummarySerializer(serializers.ModelSerializer):
             return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors,vendor_status__gte=Part.VendorStatus.Packing_Slip_Generated.value,  status=Part.Status.MovedToVendor.value, mrd=mrd).count()
         return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors,vendor_status__gte=Part.VendorStatus.Packing_Slip_Generated.value,  status=Part.Status.MovedToVendor.value).count()
     
-    def get_count_of_received_in_factory(self, obj):
+    def get_count_of_goods_received(self, obj):
         user_vendors = self.context.get('user_vendors')
         if not user_vendors:
             return Part.objects.filter(project=obj, vendor_status__gte=Part.VendorStatus.Recieved_In_Factory.value).count()
