@@ -52,13 +52,13 @@ class ProjectSummarySerializer(serializers.ModelSerializer):
     count_of_delivered = serializers.SerializerMethodField()
     count_of_goods_received = serializers.SerializerMethodField()
     count_of_qc_failed = serializers.SerializerMethodField()
-
+    count_of_pending_acceptance = serializers.SerializerMethodField()
     class Meta:
         model = Project
         fields = ['id','customerName',
                   'count_of_goods_received',
                   'count_of_qc_failed',
-                  'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered']
+                  'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered', 'count_of_pending_acceptance']
 
     def get_total_parts_count(self, obj):
         user_vendors = self.context.get('user_vendors')
@@ -73,11 +73,20 @@ class ProjectSummarySerializer(serializers.ModelSerializer):
     def get_count_of_packingSlip_generated(self, obj):
         user_vendors = self.context.get('user_vendors')
         if not user_vendors:
-            return Part.objects.filter(project=obj, vendor_status=Part.VendorStatus.Packing_Slip_Generated.value).count()
+            return Part.objects.filter(project=obj, vendor_status__gte=Part.VendorStatus.Packing_Slip_Generated.value).count()
         mrd = self.context.get('mrd')
         if mrd :
-            return  Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors,vendor_status=Part.VendorStatus.Packing_Slip_Generated.value, mrd=mrd).count()
-        return Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors,vendor_status=Part.VendorStatus.Packing_Slip_Generated.value).count()
+            return  Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors,vendor_status__gte=Part.VendorStatus.Packing_Slip_Generated.value, mrd=mrd).count()
+        return Part.objects.filter(project=obj, qr_code_scanning__in=user_vendors,vendor_status__gte=Part.VendorStatus.Packing_Slip_Generated.value).count()
+
+    def get_count_of_pending_acceptance(self, obj):
+        user_vendors = self.context.get('user_vendors')
+        if not user_vendors:
+            return Part.objects.filter(project=obj, vendor_status=Part.VendorStatus.Pending_for_acceptance.value).count()
+        mrd = self.context.get('mrd')
+        if mrd :
+            return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors, vendor_status=Part.VendorStatus.Pending_for_acceptance.value,mrd=mrd).count()
+        return Part.objects.filter(project=obj,qr_code_scanning__in=user_vendors, vendor_status=Part.VendorStatus.Pending_for_acceptance.value).count()
 
     def get_count_of_delivered(self, obj):
         user_vendors = self.context.get('user_vendors')
