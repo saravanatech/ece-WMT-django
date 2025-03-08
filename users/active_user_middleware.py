@@ -3,6 +3,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.utils.timezone import now
 
 from users.models import UserSession
+from django.db import transaction
 
 class ActiveUserMiddleware:
     def __init__(self, get_response):
@@ -16,8 +17,11 @@ class ActiveUserMiddleware:
             try:
                 if request.path not in login_paths: 
                     request.user = Token.objects.select_related('user').get(key=token).user
-                    UserSession.objects.update_or_create(user=request.user, defaults={"last_activity": now()})
+                    session, created = UserSession.objects.get_or_create(user=request.user)
+                    session.last_activity = now()
+                    session.save()
             except Token.DoesNotExist:
                 request.user = AnonymousUser()
                 print("❌ Token Authentication Failed: Invalid token")
         return self.get_response(request)
+

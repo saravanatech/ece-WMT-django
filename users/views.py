@@ -48,7 +48,7 @@ class LoginAPIView(APIView):
                 if 'admin' not in user.username and 'developer' not in user.username:
                     session = UserSession.objects.filter(user=user, is_active=True, last_activity__gte=(now() - timedelta(minutes=10))).first()
                     if session:
-                        return Response({'status':False, 'message': 'User already logged in another device'})
+                        return Response({'status':False, 'message': 'User logged-in from another system in the last 10 minutes!'})
             except UserSession.DoesNotExist:
                 pass
             
