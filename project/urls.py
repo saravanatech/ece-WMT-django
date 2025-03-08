@@ -1,7 +1,7 @@
 from django.urls import path
 
 from project.views.activity_log import ActivityLogCreateView
-from project.views.part import BulkPartUpdateView, FetchRejectedPartsView, GoodsQCFailed, GoodsRecieved, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, PartsForAcceptance, PartsForAcceptanceResponse, ScannedWhileLoadingView, ScannedWhileUnLoading, VendorAcceptedPartsView, VendorRejectedPartsView, VendorStatsView
+from project.views.part import BulkPartUpdateView, FetchRejectedPartsView, GoodsQCFailed, GoodsRecieved, MovePartToApprovedrView, MovePartToDoneView, MovePartToVendorView, PartECNtUpdateView, PartPackageAllocationView, PartPackingSlipGeneratedView, PartQRGeneratedView, PartVehicleLoadingUpdateView, PartsForAcceptance, PartsForAcceptanceResponse, ScannedWhileLoadingView, ScannedWhileUnLoading, VendorAcceptedPartsView, VendorRejectedPartsView, VendorStatsView, DistributionCenterShipped
 from project.views.part_log import PartLogListByPartID, PartLogListByProjectID
 from project.views.project import ProjectListFilterPagenatedView, ProjectListFilterPartStatusAndProjectIdView, ProjectListFilterPartStatusView, ProjectListFilterStatusPagenatedView, ProjectListFilterView, ProjectListMRDFilterPagenatedView, ProjectListView, ProjectListWithCountView, ProjectNewlyAddedVendorSummaryView, ProjectSummaryFilterView, ProjectSummaryView, ProjectVendorSummaryFilterView, ProjectVendorSummaryView
 from project.views.vehicle import ActiveDistributionCenterVehicleListView, ActiveVehicleListView, BayTimeView, CancelVehicle, Recent30VehicleListView, ShippedVehicle, VehicleCreateView, VehicleDetailView, VehicleListView, VehicleUpdateView
@@ -46,8 +46,9 @@ urlpatterns = [
     path('parts/package-allocation-done/', PartPackageAllocationView.as_view(), name='move-to-package-allocation-done'),  
     path('parts/packing-slip-generated/', PartPackingSlipGeneratedView.as_view(), name='packing-slip-generated'),   
     path('partlogs/<int:part_id>/', PartLogListByPartID.as_view(), name='partlog-list-by-part-id'),
-    path('projectlogs/<int:project_id>/', PartLogListByProjectID.as_view(), name='partlog-list-by-project-id'),
+    path('part-log-history/<str:project_id>/', PartLogListByProjectID.as_view(), name='partlog-list-by-project-id'),
     path('activity-logs/', ActivityLogCreateView.as_view(), name='activity-log-create'),
+
     
     path('vehicles/create/', VehicleCreateView.as_view(), name='create_vehicle'),
     path('vehicles/active/', ActiveVehicleListView.as_view(), name='active_vehicles'),
@@ -61,6 +62,7 @@ urlpatterns = [
     path('vehicles/list/', VehicleListView.as_view(), name='vehicle_list'),
 
     path('goods_receipt/received/', GoodsRecieved.as_view(), name='goods-receipt-recieved'),
-    path('goods_receipt/qc_failed/', GoodsQCFailed.as_view(), name='goods-receipt-qc-failed')
+    path('goods_receipt/qc_failed/', GoodsQCFailed.as_view(), name='goods-receipt-qc-failed'),
 
+    path('dc_shipped/', DistributionCenterShipped.as_view(), name='distribution-center-shipped')
 ]

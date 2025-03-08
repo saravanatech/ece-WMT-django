@@ -4,9 +4,11 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from project.models.parts import Part
+from project.models.project import Project
 from project.models.vehicle import Vehicle
 from project.serializer.vehicle import VehicleSerializer, VehicleWithPartSerializer
 from rest_framework.pagination import PageNumberPagination
+from django.utils.timezone import now
 
 
 class VehiclePagination(PageNumberPagination):
@@ -69,7 +71,8 @@ class VehicleListView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure only authenticated users can fetch active vehicles
 
     def get(self, request):
-        project = Vehicle.objects.all().order_by('-updated_at')
+        destination_id= request.query_params.get('destinationId')
+        project = Vehicle.objects.filter(destination=destination_id).order_by('-updated_at')
         paginator = PageNumberPagination()
         paginator.page_size = 100  # You can override the default page size here
         paginated_projects = paginator.paginate_queryset(project, request)
@@ -159,15 +162,23 @@ class ShippedVehicle(APIView):
 
     def get(self, request):
         pk = request.query_params.get('id')
+        projectNumberList = request.query_params.getlist('projectList')
+
         try:
             vehicle = Vehicle.objects.get(pk=pk)
             parts = Part.objects.filter(vehicle=vehicle, vehicle_status__in=(0,1,3)) # Assuming 'parts' is the related name in the Part model
+            
+            for project_no in projectNumberList:
+                project = Project.objects.get(project_no=project_no)
+                project.last_shipped_time = now()
+                project.save()
 
             if parts.exists():
                 return Response({'message': "Some Parts are are not loaded, Load all the parts and try Shipped again"}, status=status.HTTP_404_NOT_FOUND)
                
             else:
                  vehicle.status= Vehicle.Status.Shipped.value
+                 vehicle.bay_out_time = now()
                  vehicle.save()
 
                  return Response({ 'message': "Shipped Successfully" 

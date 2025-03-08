@@ -58,7 +58,7 @@ class ProjectSummarySerializer(serializers.ModelSerializer):
         fields = ['id','customerName',
                   'count_of_goods_received',
                   'count_of_qc_failed',
-                  'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered', 'count_of_pending_acceptance']
+                  'last_shipped_time', 'productType', 'projectName', 'projectNo', 'total_parts_count', 'count_of_packingSlip_generated', 'count_of_delivered', 'count_of_pending_acceptance']
 
     def get_total_parts_count(self, obj):
         user_vendors = self.context.get('user_vendors')

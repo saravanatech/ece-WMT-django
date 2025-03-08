@@ -855,3 +855,44 @@ class GoodsQCFailed(APIView):
         serializer = PartSerializer(paginated_projects, many=True)
         return paginator.get_paginated_response(serializer.data)
     
+class DistributionCenterShipped(APIView):
+    pagination_class = PartPagenation
+    def post(self, request):
+        qr_data = request.data.get('qr_data')
+        vehicle_id = request.data.get('vehicle_id')
+        is_first_package = request.data.get('is_first_package')
+
+        try:
+            vehicle = Vehicle.objects.get(id=vehicle_id)
+            vehicle.bay_in_time = now()
+            vehicle.save()
+        except:
+             return Response({'message': 'Vehicle is not active'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        package_indexes = fetchPackingSlipQRCodeDetails(qr_data)
+        if len(package_indexes) == 0:
+            return Response({'message': "Scan Rejected -  QR Code is not valid" }, status=status.HTTP_400_BAD_REQUEST)
+
+        for package_index in package_indexes:
+            part = package_index.part
+            if part.distribution_vehicle_status == Part.DistributionVehicleStatus.LoadedInTruck.value:
+                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {package_index.packAgeIndex}  - {part.project.project_no} already shipped' }, status=status.HTTP_400_BAD_REQUEST)
+
+            if part.vendor_status != Part.VendorStatus.Packing_Slip_Generated.value:
+                return Response({'message': f'Scan Rejected - {part} must be in Packing Slip Generated status' }, status=status.HTTP_400_BAD_REQUEST)
+        
+            part.distribution_vehicle_status = Part.DistributionVehicleStatus.LoadedInTruck.value
+            part.distribution_vehicle = vehicle
+            part.save()
+            
+            
+            PartLog.objects.create(
+                        part=part,
+                        project=part.project,
+                        logMessage=f" {package_index.packageName} - {package_index.packAgeIndex} Recevied successfully in package ",
+                        type='info',
+                        created_by=request.user
+                    )
+        
+        serliazlier = PackageIndexSerializer(package_indexes, many=True)
+        return Response(serliazlier.data, status=status.HTTP_200_OK)
