@@ -864,8 +864,9 @@ class DistributionCenterShipped(APIView):
 
         try:
             vehicle = Vehicle.objects.get(id=vehicle_id)
-            vehicle.bay_in_time = now()
-            vehicle.save()
+            if is_first_package:
+                vehicle.bay_in_time = now()
+                vehicle.save()
         except:
              return Response({'message': 'Vehicle is not active'}, status=status.HTTP_400_BAD_REQUEST)
         

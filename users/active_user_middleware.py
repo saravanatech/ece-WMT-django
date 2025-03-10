@@ -3,7 +3,6 @@ from django.contrib.auth.models import AnonymousUser
 from django.utils.timezone import now
 
 from users.models import UserSession
-from django.db import transaction
 
 class ActiveUserMiddleware:
     def __init__(self, get_response):

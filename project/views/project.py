@@ -301,11 +301,11 @@ class  ProjectSummaryFilterView(APIView):
             ).values_list('project_id', flat=True).distinct()
         elif not mrd:  
             project_ids = Part.objects.filter(
-                 Q(project__project_no__icontains=project_no) & Q(qr_code_scanning__in=user_vendors)
+                 (Q(project__project_no__icontains=project_no) | Q(project__project_name__icontains=project_no)) & Q(qr_code_scanning__in=user_vendors)
             ).values_list('project_id', flat=True).distinct() 
         else:
             project_ids = Part.objects.filter(
-                 Q(mrd__icontains=mrd) & Q(qr_code_scanning__in=user_vendors) &   Q(project__project_no__icontains=project_no)
+                 Q(mrd__icontains=mrd) & Q(qr_code_scanning__in=user_vendors) & (Q(project__project_no__icontains=project_no) | Q(project__project_name__icontains=project_no))
             ).values_list('project_id', flat=True).distinct()
         projects = Project.objects.filter(pk__in=project_ids).order_by('created_at')
 
