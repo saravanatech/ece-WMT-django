@@ -11,7 +11,7 @@ class PartLogListByPartID(generics.ListAPIView):
     def get_queryset(self):
         part_id = self.kwargs['part_id']
         part = Part.objects.get(id=part_id)
-        return PartLog.objects.filter(part=part)
+        return PartLog.objects.filter(part=part).order_by("-created_at")
     
 
 class PartLogListByProjectID(generics.ListAPIView):
