@@ -875,16 +875,20 @@ class DistributionCenterShipped(APIView):
             return Response({'message': "Scan Rejected -  QR Code is not valid" }, status=status.HTTP_400_BAD_REQUEST)
 
         for package_index in package_indexes:
+            if package_index.status >= PackageIndex.Status.DCLoaded.value:
+                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {package_index.packAgeIndex} already {PackageIndex.Status(package_index.status).name}' }, status=status.HTTP_400_BAD_REQUEST)
+            package_index.status = PackageIndex.Status.DCLoaded.value
+            package_index.save()
+
             part = package_index.part
-            if part.distribution_vehicle_status == Part.DistributionVehicleStatus.LoadedInTruck.value:
-                return Response({'message': f'Scan Rejected -  {package_index.packageName} - {package_index.packAgeIndex}  - {part.project.project_no} already shipped' }, status=status.HTTP_400_BAD_REQUEST)
 
             if part.vendor_status != Part.VendorStatus.Packing_Slip_Generated.value:
                 return Response({'message': f'Scan Rejected - {part} must be in Packing Slip Generated status' }, status=status.HTTP_400_BAD_REQUEST)
-        
-            part.distribution_vehicle_status = Part.DistributionVehicleStatus.LoadedInTruck.value
-            part.distribution_vehicle = vehicle
-            part.save()
+
+            if not part.distribution_vehicle or part.distribution_vehicle != vehicle:
+                part.distribution_vehicle_status = Part.DistributionVehicleStatus.LoadedInTruck.value
+                part.distribution_vehicle = vehicle
+                part.save()
             
             
             PartLog.objects.create(
