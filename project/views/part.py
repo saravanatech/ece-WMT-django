@@ -286,6 +286,8 @@ class MovePartToVendorView(APIView):
                 part.updated_by = self.request.user
                 part.vendor_status = Part.VendorStatus.Pending_for_acceptance.value
                 part.assigned_time = timezone.now() 
+                if part.qr_code_scanning is None: 
+                    part.qr_code_scanning = vendor.name
                 part.save()
                 PartLog.objects.create(part=part,project=part.project, logMessage="Status changed to Moved to Vendor", type='info', created_by=request.user)
                 PartLog.objects.create(part=part,project=part.project, logMessage="Assigned to vendor for acceptance ", type='info', created_by=request.user)
