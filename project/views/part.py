@@ -161,7 +161,7 @@ class PartVehicleLoadingUpdateView(APIView):
                         part.distribution_vehicle_status = Part.DistributionVehicleStatus.TrukDataLoaded.value
                     else :
                         part.vehicle_status = Part.VechileStatus.TrukDataLoaded.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage="Vechile Details Updated {vheicle}", type='info', created_by=request.user)
+                    PartLog.objects.create(part=part,project=part.project, logMessage="Vehicle Details Updated {vheicle}", type='info', created_by=request.user)
                     part.save()
                 else:
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -659,7 +659,7 @@ class ScannedWhileLoadingView(APIView):
                     else :
                         part.vehicle_status = Part.VechileStatus.PartiallyLoaded.value
                         part.status = Part.Status.PartiallyLoaded.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package Loaded partially into vechile - {vehicle}", type='info', created_by=request.user)       
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package Loaded partially into vehicle - {vehicle}", type='info', created_by=request.user)       
                 else:
                     if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value:
                         part.distribution_vehicle_status = Part.DistributionVehicleStatus.LoadedInTruck.value
@@ -667,7 +667,7 @@ class ScannedWhileLoadingView(APIView):
                     else:
                         part.vehicle_status = Part.VechileStatus.LoadedInTruck.value
                         part.status = Part.Status.Delivered.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package Loaded fully into vechile - {vehicle}", type='info', created_by=request.user)
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package Loaded fully into vehicle - {vehicle}", type='info', created_by=request.user)
 
                 part.updated_by = self.request.user
                 part.save()
@@ -734,14 +734,14 @@ class ScannedWhileUnLoading(APIView):
                     else:
                         part.vehicle_status = Part.VechileStatus.PartiallyLoaded.value
                     part.status = Part.Status.PartiallyLoaded.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package unloaded partially from vechile - {vehicle}", type='info', created_by=request.user)
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package unloaded partially from vehicle - {vehicle}", type='info', created_by=request.user)
                 else:
                     if vehicle.destination == Vehicle.DestinationId.Distribution_Center.value:
                         part.distribution_vehicle_status = Part.DistributionVehicleStatus.UnLoaded.value
                     else:    
                         part.vehicle_status = Part.VechileStatus.UnLoaded.value
                     part.status = Part.Status.MovedToVendor.value
-                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package unloaded fully from vechile - {vehicle}", type='info', created_by=request.user)
+                    PartLog.objects.create(part=part,project=part.project, logMessage=f"Package unloaded fully from vehicle - {vehicle}", type='info', created_by=request.user)
                 part.updated_by = self.request.user
                 part.save()
                 updated_parts.append(part)
